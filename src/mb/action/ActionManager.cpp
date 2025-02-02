@@ -17,6 +17,7 @@
 #include "ActionManager.h"
 
 #include "ModbusMaster.h"
+#include "Logger.h"
 
 #include <iostream>
 #include <fstream>
@@ -25,12 +26,12 @@ namespace mb {
 namespace action {
 
 ActionManager::ActionManager(Config* config, 
-									  DataManager* data_manager,
-									  MemManager* mem_manager) : m_config(config), 
-									  						  			  m_data_manager(data_manager),
-																		  m_mem_manager(mem_manager),
-							   		  					  			  m_run(false),
-																		  m_connect(false) {
+							 DataManager* data_manager,
+							 MemManager* mem_manager) : m_config(config), 
+									  					m_data_manager(data_manager),
+														m_mem_manager(mem_manager),
+							   		  					m_run(false),
+														m_connect(false) {
 	m_time_between_requests = m_config->timeBetweenRequests();
 	m_response_timeout = m_config->responseTimeout();
 	m_poll_delay = m_config->pollDelay();
@@ -87,12 +88,30 @@ ActionManager::~ActionManager() {
 }
 
 bool ActionManager::start() {
-	if (m_run.load()) return false;
+	Logger::Instance()->log(LogLevel::INFO, "Modbus master initialize...\n");
+
+	if (m_run.load()) {
+		Logger::Instance()->log(LogLevel::INFO, "Modbus master already runned\n");
+		return false;
+	}
 	
-	if (!m_modbus_master->setContext()) return false;
-	if (!m_modbus_master->connect()) return false;
-	
-	m_modbus_master->setDebug();
+	if (!m_modbus_master->setContext()) {
+		Logger::Instance()->log(LogLevel::ERROR, "Modbus master invalid set context\n");
+		return false;
+	}
+	if (!m_modbus_master->connect()) {
+		Logger::Instance()->log(LogLevel::ERROR, "Modbus master invalid connect\n");
+		return false;
+	}
+
+	if (m_config->logMode() != LOG_TYPE_NONE) {
+		m_modbus_master->setLog(TRUE);
+		Logger::Instance()->log(LogLevel::INFO, "Modbus master set log true\n");
+	}
+	if (m_config->logDebugMode()) {
+		Logger::Instance()->log(LogLevel::INFO, "Modbus master set debug true\n");
+		m_modbus_master->setDebug(TRUE);
+	}
 	m_modbus_master->setErrorRecovery(true);
 
 	m_thread = std::thread(&ActionManager::payload, 
@@ -156,30 +175,8 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager) 
 
 			}			
 
-			// std::cout << "Request: " 
-			//  << request.function 
-			//  << ", " << request.address 
-			//  << ", " << request.quantity 
-			//  << std::endl;
-
-			// std::cout << "Buffer: "; 
-			// if (isCoilFunc(request.function)) {
-			// 	for (int i = 0; i < request.quantity; i++) {
-			// 		std::cout << "[" << static_cast<int>(*(u8_ptr + i)) << "]";
-			// 	}
-			// }
-			// else {
-			// 	for (int i = 0; i < request.quantity; i++) {
-			// 		std::cout << "[" << buffer[i] << "]";
-			// 	}
-			// }
-			// std::cout << std::endl;
-
 			if (!response) { 
 				m_modbus_master->flush();
-				m_modbus_master->printError();
-				std::cout << "CS: ERRORS: " << error << std::endl;
-
 				++error;
 			} 
 			else { 

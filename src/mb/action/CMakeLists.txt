@@ -12,5 +12,6 @@ target_link_libraries(action_manager PUBLIC helpers
                                             config
                                             data_manager
                                             mem_manager
-                                            modbus-static)
+                                            modbus-static
+                                            log)
 

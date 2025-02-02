@@ -7,6 +7,7 @@
 #include "ModbusTrans.h"
 #include "ModbusRegister.h"
 #include "ModbusRequest.h"
+#include "Logger.h"
 
 #include <string>
 
@@ -16,6 +17,7 @@ namespace data {
 using namespace mb::config;
 using namespace mb::types;
 using namespace mb::mem;
+using namespace mb::log;
 
 class RegManager;
 class RangeManager;

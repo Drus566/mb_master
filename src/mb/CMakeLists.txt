@@ -13,4 +13,5 @@ target_link_libraries(mb PRIVATE helpers
                                  data_manager
                                  action_manager
                                  mem_manager
-                                 config)
+                                 config
+                                 log)

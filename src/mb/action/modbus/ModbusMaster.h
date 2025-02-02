@@ -1,7 +1,10 @@
 #ifndef MB_MODBUS_MASTER_H
 #define MB_MODBUS_MASTER_H
 
+#define LOG_BUFFER_SIZE 256
+
 #include "ModbusConnection.h"
+#include "Logger.h"
 #include "modbus.h"
 
 #include <cstdint>
@@ -21,7 +24,13 @@ public:
     bool setContext(const ModbusConnection& connection);
 
     /** @brief set debug */
-    void setDebug();
+    void setDebug(int flag);
+    
+    /** @brief set log */
+    void setLog(int flag);
+
+    /** @brief set log buffer */
+    void setLogBuffer(char* buffer);
 
     /** @brief connect on current context */
     bool connect();
@@ -74,9 +83,6 @@ public:
     /** @brief free modbus current context */
     void free();
 
-    /** @brief print error message */
-    void printError();
-
     /** @brief get error message */
     std::string getStrError();
 
@@ -93,8 +99,10 @@ public:
 
 private:
     ModbusConnection& m_connection;
-    /** @brief context modbus connection */
-    modbus_t* m_ctx;  
+    modbus_t* m_ctx;
+    char m_tx_log_buffer[LOG_BUFFER_SIZE];
+    char m_rx_log_buffer[LOG_BUFFER_SIZE];  
+    char m_error_log_buffer[LOG_BUFFER_SIZE];
 };
 
 } // action

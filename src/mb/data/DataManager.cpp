@@ -4,6 +4,7 @@
 #include "MemManager.h"
 #include "RangeManager.h"
 #include "RequestManager.h"
+#include "Logger.h"
 
 #include "String.h"
 
@@ -20,10 +21,14 @@ DataManager::~DataManager() {
 }
 
 bool DataManager::start() {
+    Logger::Instance()->log(LogLevel::INFO, "Modbus data initialize...\n");
+
     bool result = false;
 
     int mcbr = m_config->maxCountRegsRead();
     if (mcbr <= 0) mcbr = DEFAULT_MAX_COUNT_REGS_READ;
+
+    Logger::Instance()->log(LogLevel::INFO, "Max count regs read %d\n", DEFAULT_MAX_COUNT_REGS_READ);
 
     m_range_manager = new RangeManager;
     m_reg_manager = new RegManager;
@@ -31,18 +36,29 @@ bool DataManager::start() {
 
     int slave_id = m_config->slaveId();
 
+    Logger::Instance()->log(LogLevel::INFO, "Slave id %d\n", slave_id);
+
     SectionsMap map;
     map = m_config->getAreas(map);
-    if (map.empty()) return false;
+    if (map.empty()) {
+        Logger::Instance()->log(LogLevel::ERROR, "Section map is empty\n");
+        return false;
+    }
 
     result = parseRanges(slave_id, map);
-    if (!result) return false;
+    if (!result) {
+        Logger::Instance()->log(LogLevel::ERROR, "Uncorrect parse ranges\n");
+        return false;
+    }
 
     map.clear();
     map = m_config->getRegs(map);
     if (!map.empty()) {
         result = parseRegs(slave_id, map);
-        if (!result) return false;
+        if (!result) { 
+            Logger::Instance()->log(LogLevel::ERROR, "Uncorrect parse regs\n");
+            return false;
+        }
     }
 
     createRequests();
@@ -75,7 +91,7 @@ bool DataManager::parseRanges(int slave_id, SectionsMap& map) {
             pure_section = section_slave[0];
         }
         else pure_section = section;
-        std::cout << section << std::endl;
+        // std::cout << section << std::endl;
         
         /* Get params */
         const auto& params_list = map[section];
@@ -90,7 +106,7 @@ bool DataManager::parseRanges(int slave_id, SectionsMap& map) {
                     else if (param_key_str == HOLDING_REGISTERS_KEY) function = FuncNumber::READ_REGS;
                 }
                 m_range_manager->addRange(current_slave_id, function, range_str);
-                std::cout << param.first << ": " << param.second << std::endl;
+                // std::cout << param.first << ": " << param.second << std::endl;
             }
         }
         result = true;

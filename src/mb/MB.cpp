@@ -21,10 +21,20 @@ MB::~MB() {
 }
 
 bool MB::start() { 
-	if (m_start) return false;
+	if (m_start) {
+		Logger::Instance()->log(LogLevel::INFO, "Already started\n");
+		return false;
+	}
 
 	if (!m_data_manager->start()) return false;
+
+	Logger::Instance()->log(LogLevel::INFO, "Modbus data success initialized\n");
+
 	if (!m_action_manager->start()) return false;
+
+	Logger::Instance()->log(LogLevel::INFO, "Modbus master success initialized\n");
+
+	if (m_config->logMode() == LOG_TYPE_SESSION) Logger::Instance()->setActive(false); 
 	
 	m_start = true;
 	return true;

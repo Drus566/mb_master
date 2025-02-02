@@ -106,8 +106,9 @@ struct _modbus {
     const modbus_backend_t *backend;
     void *backend_data;
     int log;
-    char *buffer_tx;
-    char *buffer_rx;
+    char *tx_log_buffer;
+    char *rx_log_buffer;
+    char *error_log_buffer;
 };
 
 void _modbus_init_common(modbus_t *ctx);

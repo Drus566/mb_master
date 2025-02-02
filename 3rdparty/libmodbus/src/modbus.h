@@ -219,7 +219,8 @@ MODBUS_API void modbus_free(modbus_t *ctx);
 MODBUS_API int modbus_flush(modbus_t *ctx);
 MODBUS_API int modbus_set_debug(modbus_t *ctx, int flag);
 MODBUS_API int modbus_set_log(modbus_t *ctx, int flag);
-MODBUS_API int modbus_set_log_buf(modbus_t *ctx, char *tx_buf_ptr, char *rx_buf_ptr);
+MODBUS_API int modbus_set_log_buf(modbus_t *ctx, char *error_log_buffer, char *rx_log_buffer, char *tx_log_buffer);
+
 
 MODBUS_API const char *modbus_strerror(int errnum);
 

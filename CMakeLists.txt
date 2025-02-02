@@ -48,7 +48,8 @@ target_link_libraries(mb-static
 	mem_manager 
 	helpers 
 	version
-	modbus-static 
+	modbus-static
+	log
 )
 
 target_link_libraries(mb-shared 
@@ -58,7 +59,8 @@ target_link_libraries(mb-shared
 	mem_manager 
 	helpers 
 	version
-	modbus-static 
+	modbus-static
+	log
 )
 
 

@@ -14,5 +14,6 @@ target_include_directories(data_manager PRIVATE reg
 target_link_libraries(data_manager PUBLIC mem_manager
                                           helpers 
                                           types
-                                          config)
+                                          config
+                                          log)
 

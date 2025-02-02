@@ -6,6 +6,7 @@
 #include "Config.h"
 #include "DataManager.h"
 #include "ActionManager.h"
+#include "Logger.h"
 
 namespace mb {
 
