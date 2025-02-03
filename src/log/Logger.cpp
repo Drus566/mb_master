@@ -53,17 +53,19 @@ bool Logger::setLogFile(std::string& filename) {
 
 void Logger::log(LogLevel level, const std::string& message) {
     std::lock_guard<std::mutex> lock(m_mtx);
-    if (!m_active) return;
+    if (!m_active || !m_log_file.is_open()) return;
 
-    if (m_log_file.is_open()) {
-        setCurrentTime();
-        m_log_file << m_current_time << logLevelToString(level) << message;
-    }
+    if (message[0] == '\0' || message[0] == '\n') return;
+
+    setCurrentTime();
+    m_log_file << m_current_time << logLevelToString(level) << message;
 }
 
 void Logger::log(LogLevel level, const char* format, ...) {
     std::lock_guard<std::mutex> lock(m_mtx);
     if (!m_active || !m_log_file.is_open()) return;
+
+    if (*format == '\0' || *format == '\n') return;
 
     std::ostringstream oss;
     va_list args;

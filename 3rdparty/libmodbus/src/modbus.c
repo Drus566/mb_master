@@ -89,11 +89,10 @@ void _error_print(modbus_t *ctx, const char *context)
     }
 
     if (ctx->log) {
-        sprintf(ctx->error_log_buffer, "ERROR %s", modbus_strerror(errno));
+        int ret;
+        ret = sprintf(ctx->error_log_buffer, "ERROR %s", modbus_strerror(errno));
         if (context != NULL) {
-            sprintf(ctx->error_log_buffer, ": %s\n", context);
-        } else {
-            sprintf(ctx->error_log_buffer, "\n");
+            sprintf(ctx->error_log_buffer + ret, ": %s", context);
         }
     }
 }
@@ -171,6 +170,10 @@ static unsigned int compute_response_length_from_request(modbus_t *ctx, uint8_t 
 /* Sends a request/response */
 static int send_msg(modbus_t *ctx, uint8_t *msg, int msg_length)
 {
+    *ctx->error_log_buffer = '\0';
+    *ctx->rx_log_buffer = '\0';
+    *ctx->tx_log_buffer = '\0';
+
     int ret;
     int rc;
     int i;
@@ -187,7 +190,7 @@ static int send_msg(modbus_t *ctx, uint8_t *msg, int msg_length)
         for (ret = 0, i = 0; i < msg_length; i++) {
             ret += sprintf(ctx->tx_log_buffer + ret, "[%.2X]", msg[i]);
         }
-        sprintf(ctx->tx_log_buffer + ret, "\n");
+        // sprintf(ctx->tx_log_buffer + ret, "\n");
     }
 
     /* In recovery mode, the write command will be issued until to be
@@ -396,7 +399,7 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
             fprintf(stderr, "ERROR The connection is not established.\n");
         }
         if (ctx->log) {
-            sprintf(ctx->error_log_buffer, "ERROR The connection is not established.\n");
+            sprintf(ctx->error_log_buffer, "ERROR The connection is not established");
         }
         return -1;
     }
@@ -429,6 +432,7 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
         p_tv = &tv;
     }
 
+    int ret = 0;
     while (length_to_read != 0) {
         rc = ctx->backend->select(ctx, &rset, p_tv, length_to_read);
         if (rc == -1) {
@@ -497,10 +501,12 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
         }
 
         if (ctx->log) {
-            int i, ret;
-            for (ret = 0, i = 0; i < rc; i++) {
+            int i;
+            for (i = 0; i < rc; i++) {
                 ret += sprintf(ctx->rx_log_buffer + ret, "<%.2X>", msg[msg_length + i]);
             }
+            // sprintf(ctx->rx_log_buffer + ret, "\n");
+
             // sprintf(ctx->log_buffer + ret, "\n");
         }
 
@@ -550,9 +556,9 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
     if (ctx->debug)
         printf("\n");
     
-    if (ctx->log) {
-        sprintf(ctx->rx_log_buffer, "\n");
-    }
+    // if (ctx->log) {
+    //     sprintf(ctx->rx_log_buffer, "\n");
+    // }
 
     return ctx->backend->check_integrity(ctx, msg, msg_length);
 }
@@ -648,7 +654,7 @@ static int check_confirmation(modbus_t *ctx, uint8_t *req, uint8_t *rsp, int rsp
             if (ctx->log) {
                 sprintf(
                     ctx->error_log_buffer,
-                    "Received function not corresponding to the request (0x%X != 0x%X)\n",
+                    "Received function not corresponding to the request (0x%X != 0x%X)",
                     function,
                     req[offset]);
             }
@@ -726,7 +732,7 @@ static int check_confirmation(modbus_t *ctx, uint8_t *req, uint8_t *rsp, int rsp
             }
             if (ctx->log) {
                 sprintf(ctx->error_log_buffer,
-                        "Received data not corresponding to the request (%d != %d)\n",
+                        "Received data not corresponding to the request (%d != %d)",
                         rsp_nb_value,
                         req_nb_value);
             }
@@ -750,7 +756,7 @@ static int check_confirmation(modbus_t *ctx, uint8_t *req, uint8_t *rsp, int rsp
         if (ctx->log) {
             sprintf(
                 ctx->error_log_buffer,
-                "Message length not corresponding to the computed length (%d != %d)\n",
+                "Message length not corresponding to the computed length (%d != %d)",
                 rsp_length,
                 rsp_length_computed);
         }
@@ -1133,7 +1139,7 @@ int modbus_reply(modbus_t *ctx,
             fprintf(stderr, "FIXME Not implemented\n");
         }
         if (ctx->log) {
-            sprintf(ctx->error_log_buffer, "FIXME Not implemented\n");
+            sprintf(ctx->error_log_buffer, "FIXME Not implemented");
         }
         errno = ENOPROTOOPT;
         return -1;
@@ -1350,7 +1356,7 @@ int modbus_read_bits(modbus_t *ctx, int addr, int nb, uint8_t *dest)
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Too many bits requested (%d > %d)\n",
+                    "ERROR Too many bits requested (%d > %d)",
                     nb,
                     MODBUS_MAX_READ_BITS);
         }
@@ -1386,7 +1392,7 @@ int modbus_read_input_bits(modbus_t *ctx, int addr, int nb, uint8_t *dest)
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Too many discrete inputs requested (%d > %d)\n",
+                    "ERROR Too many discrete inputs requested (%d > %d)",
                     nb,
                     MODBUS_MAX_READ_BITS);
         }
@@ -1419,7 +1425,7 @@ static int read_registers(modbus_t *ctx, int function, int addr, int nb, uint16_
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Too many registers requested (%d > %d)\n",
+                    "ERROR Too many registers requested (%d > %d)",
                     nb,
                     MODBUS_MAX_READ_REGISTERS);
         }
@@ -1473,7 +1479,7 @@ int modbus_read_registers(modbus_t *ctx, int addr, int nb, uint16_t *dest)
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Too many registers requested (%d > %d)\n",
+                    "ERROR Too many registers requested (%d > %d)",
                     nb,
                     MODBUS_MAX_READ_REGISTERS);
         }
@@ -1505,7 +1511,7 @@ int modbus_read_input_registers(modbus_t *ctx, int addr, int nb, uint16_t *dest)
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Too many input registers requested (%d > %d)\n",
+                    "ERROR Too many input registers requested (%d > %d)",
                     nb,
                     MODBUS_MAX_READ_REGISTERS);
         }
@@ -1596,7 +1602,7 @@ int modbus_write_bits(modbus_t *ctx, int addr, int nb, const uint8_t *src)
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Writing too many bits (%d > %d)\n",
+                    "ERROR Writing too many bits (%d > %d)",
                     nb,
                     MODBUS_MAX_WRITE_BITS);
         }
@@ -1664,7 +1670,7 @@ int modbus_write_registers(modbus_t *ctx, int addr, int nb, const uint16_t *src)
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Trying to write to too many registers (%d > %d)\n",
+                    "ERROR Trying to write to too many registers (%d > %d)",
                     nb,
                     MODBUS_MAX_WRITE_REGISTERS);
         }
@@ -1766,7 +1772,7 @@ int modbus_write_and_read_registers(modbus_t *ctx,
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Too many registers to write (%d > %d)\n",
+                    "ERROR Too many registers to write (%d > %d)",
                     write_nb,
                     MODBUS_MAX_WR_WRITE_REGISTERS);
         }
@@ -1783,7 +1789,7 @@ int modbus_write_and_read_registers(modbus_t *ctx,
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Too many registers requested (%d > %d)\n",
+                    "ERROR Too many registers requested (%d > %d)",
                     read_nb,
                     MODBUS_MAX_WR_READ_REGISTERS);
         }

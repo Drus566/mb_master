@@ -36,6 +36,9 @@ public:
     bool connect();
 
     /** @brief set byte timeout */
+    bool setByteTimeout();
+
+    /** @brief set byte timeout */
     bool setByteTimeout(int sec, int usec);
 
     /** @brief get byte timeout */

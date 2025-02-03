@@ -38,7 +38,7 @@ bool ModbusMaster::setContext(const ModbusConnection& connection) {
 	}
 	else result = false; 
 
-	if (!m_ctx || !setResponseTimeout()) result = false;
+	if (!m_ctx || !setResponseTimeout() || !setByteTimeout()) result = false;
 
 	return result;
 }
@@ -65,6 +65,14 @@ bool ModbusMaster::connect() {
 	bool result = true;
    if (modbus_connect(m_ctx) == -1) result = false;
    return result;
+}
+
+bool ModbusMaster::setByteTimeout() {
+	bool result = true;
+	int seconds, microseconds;
+	mb::helpers::millisecondsToSecondsMicroseconds(m_connection.byte_timeout, seconds, microseconds);
+	if (modbus_set_byte_timeout(m_ctx, seconds, microseconds) == -1) result = false;
+	return result;
 }
 
 bool ModbusMaster::setByteTimeout(int sec, int usec) {
