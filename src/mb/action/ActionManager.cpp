@@ -1,6 +1,8 @@
 /** timing params */
 #define DEFAULT_TIME_BETWEEN_REQUESTS 10
 #define DEFAULT_RESPONSE_TIMEOUT 500
+#define DEFAULT_BYTE_TIMEOUT 10
+#define DEFAULT_POOL_DELAY 10
 
 #define DEFAULT_MAX_COUNT_ERRORS 10
 
@@ -32,16 +34,23 @@ ActionManager::ActionManager(Config* config,
 														m_mem_manager(mem_manager),
 							   		  				m_run(false),
 														m_connect(false) {
+	std::chrono::milliseconds response_timeout = m_config->responseTimeout();
+	std::chrono::milliseconds byte_timeout = m_config->byteTimeout();
+
 	m_time_between_requests = m_config->timeBetweenRequests();
-	m_response_timeout = m_config->responseTimeout();
 	m_poll_delay = m_config->pollDelay();
+	
 	m_max_count_errors = m_config->maxCountErrors();
 
 	if (m_time_between_requests.count() == 0) m_time_between_requests = std::chrono::milliseconds(DEFAULT_TIME_BETWEEN_REQUESTS);
-	if (m_response_timeout.count() == 0) m_response_timeout = std::chrono::milliseconds(DEFAULT_RESPONSE_TIMEOUT);
+	if (m_poll_delay.count() == 0) m_poll_delay = std::chrono::milliseconds(DEFAULT_POOL_DELAY);
 	if (m_max_count_errors == 0) m_max_count_errors = DEFAULT_MAX_COUNT_ERRORS;
 
-	m_modbus_connection.response_timeout = m_response_timeout.count();
+	if (response_timeout.count() == 0) response_timeout = std::chrono::milliseconds(DEFAULT_RESPONSE_TIMEOUT);
+	if (byte_timeout.count() == 0) byte_timeout = std::chrono::milliseconds(DEFAULT_BYTE_TIMEOUT);
+
+	m_modbus_connection.response_timeout = response_timeout.count();
+	m_modbus_connection.byte_timeout = byte_timeout.count();
 
 	std::string type = m_config->type();
 	type = toUpperCase(type);

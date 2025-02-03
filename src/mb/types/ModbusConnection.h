@@ -16,6 +16,7 @@ enum class ModbusConnectionType {
 struct ModbusConnection {
 	ModbusConnectionType type;
 	int response_timeout;
+	int byte_timeout;
 	
 	struct {
 		std::string serial_port;

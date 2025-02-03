@@ -41,6 +41,7 @@ class Config {
     unsigned int maxCountRegsRead() const { return get<unsigned int>(SETTINGS_SECTION, "MaxCountRegsRead"); }
     std::chrono::milliseconds timeBetweenRequests() const { return get<std::chrono::milliseconds>(SETTINGS_SECTION, "TimeBetweenRequests"); }
     std::chrono::milliseconds responseTimeout() const { return get<std::chrono::milliseconds>(SETTINGS_SECTION, "ResponseTimeout"); }
+    std::chrono::milliseconds byteTimeout() const { return get<std::chrono::milliseconds>(SETTINGS_SECTION, "ByteTimeout"); }
     std::chrono::milliseconds pollDelay() const { return get<std::chrono::milliseconds>(SETTINGS_SECTION, "PollDelay"); }
     unsigned int maxCountErrors() const { return get<unsigned int>(SETTINGS_SECTION, "MaxCountErrors"); }
 

@@ -73,6 +73,12 @@ bool ModbusMaster::setByteTimeout(int sec, int usec) {
 	return result;
 }
 
+bool ModbusMaster::getByteTimeout(uint32_t* to_sec, uint32_t* to_usec) {
+	bool result = true;
+	if (modbus_get_byte_timeout(m_ctx, to_sec, to_usec) == -1) result = false;
+	return result;  
+}
+
 bool ModbusMaster::setResponseTimeout() {
 	bool result = true;
 	int seconds, microseconds;

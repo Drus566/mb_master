@@ -38,6 +38,9 @@ public:
     /** @brief set byte timeout */
     bool setByteTimeout(int sec, int usec);
 
+    /** @brief get byte timeout */
+    bool getByteTimeout(uint32_t* to_sec, uint32_t* to_usec);
+
     /** @brief set response timeoute */
     bool setResponseTimeout();
 

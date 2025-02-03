@@ -44,8 +44,8 @@ private:
 	std::thread m_thread;
 
 	std::chrono::milliseconds m_time_between_requests;
-	std::chrono::milliseconds m_response_timeout;
 	std::chrono::milliseconds m_poll_delay;
+	
 	int m_max_count_errors;
 
 	void payload(DataManager* data_manager, MemManager* mem_manager);
