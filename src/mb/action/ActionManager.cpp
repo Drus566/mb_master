@@ -30,7 +30,7 @@ ActionManager::ActionManager(Config* config,
 							 MemManager* mem_manager) : m_config(config), 
 									  					m_data_manager(data_manager),
 														m_mem_manager(mem_manager),
-							   		  					m_run(false),
+							   		  				m_run(false),
 														m_connect(false) {
 	m_time_between_requests = m_config->timeBetweenRequests();
 	m_response_timeout = m_config->responseTimeout();

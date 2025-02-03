@@ -35,6 +35,9 @@ public:
     /** @brief connect on current context */
     bool connect();
 
+    /** @brief set byte timeout */
+    bool setByteTimeout(int sec, int usec);
+
     /** @brief set response timeoute */
     bool setResponseTimeout();
 

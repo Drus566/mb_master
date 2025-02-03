@@ -23,10 +23,10 @@ using namespace mb::mem;
 
 class ActionManager {    
 public:
-   	ActionManager(Config* config, DataManager* data_manager, MemManager* mem_manager);
-   	~ActionManager();
+   ActionManager(Config* config, DataManager* data_manager, MemManager* mem_manager);
+   ~ActionManager();
 	
-   	bool start();
+   bool start();
 	bool stop();
 	bool isRun();
 	bool isConnect();
