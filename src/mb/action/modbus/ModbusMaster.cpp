@@ -13,8 +13,8 @@ ModbusMaster::ModbusMaster(ModbusConnection& connection) : m_connection(connecti
 
 ModbusMaster::~ModbusMaster() {
 	if (m_ctx) {
-   		close();
-   		free();
+   	close();
+   	free();
 	}
 }
 
