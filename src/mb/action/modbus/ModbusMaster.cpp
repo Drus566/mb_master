@@ -9,7 +9,7 @@ namespace action {
 using namespace mb::log;
 
 ModbusMaster::ModbusMaster(ModbusConnection& connection) : m_connection(connection),
-														   m_ctx(NULL) {}
+														   				  m_ctx(NULL) {}
 
 ModbusMaster::~ModbusMaster() {
 	if (m_ctx) {
@@ -39,6 +39,8 @@ bool ModbusMaster::setContext(const ModbusConnection& connection) {
 	else result = false; 
 
 	if (!m_ctx || !setResponseTimeout() || !setByteTimeout()) result = false;
+
+	if (result) setDebug(false);
 
 	return result;
 }
@@ -128,8 +130,8 @@ bool ModbusMaster::readBits(int slave_id, int addr, int count, uint8_t* dest) {
 	setSlave(slave_id);
    if (modbus_read_bits(m_ctx, addr, count, dest) == -1) result = false;
    	
-	Logger::Instance()->log(LogLevel::MESSAGE, m_tx_log_buffer);
-	Logger::Instance()->log(LogLevel::MESSAGE, m_rx_log_buffer);
+	Logger::Instance()->log(LogLevel::TX, m_tx_log_buffer);
+	Logger::Instance()->log(LogLevel::RX, m_rx_log_buffer);
 
 	if (!result) Logger::Instance()->log(LogLevel::ERROR, m_error_log_buffer);
 
@@ -139,10 +141,10 @@ bool ModbusMaster::readBits(int slave_id, int addr, int count, uint8_t* dest) {
 bool ModbusMaster::readInputBits(int slave_id, int addr, int count, uint8_t* dest) {
 	bool result = true;
 	setSlave(slave_id);
-   if (modbus_read_input_bits(m_ctx, addr, count, dest) == -1) result = false; 
+   if (modbus_read_input_bits(m_ctx, addr, count, dest) == -1) result = false;
 
-   Logger::Instance()->log(LogLevel::MESSAGE, m_tx_log_buffer);
-	Logger::Instance()->log(LogLevel::MESSAGE, m_rx_log_buffer);
+	Logger::Instance()->log(LogLevel::TX, m_tx_log_buffer);
+	Logger::Instance()->log(LogLevel::RX, m_rx_log_buffer);
 
 	if (!result) Logger::Instance()->log(LogLevel::ERROR, m_error_log_buffer);
 
@@ -152,10 +154,10 @@ bool ModbusMaster::readInputBits(int slave_id, int addr, int count, uint8_t* des
 bool ModbusMaster::readRegisters(int slave_id, int addr, int count, uint16_t* dest) {
 	bool result = true;
 	setSlave(slave_id);
-   if (modbus_read_registers(m_ctx, addr, count, dest) == -1) result = false; 
+   if (modbus_read_registers(m_ctx, addr, count, dest) == -1) result = false;
 
-	Logger::Instance()->log(LogLevel::MESSAGE, m_tx_log_buffer);
-	Logger::Instance()->log(LogLevel::MESSAGE, m_rx_log_buffer);
+	Logger::Instance()->log(LogLevel::TX, m_tx_log_buffer);
+	Logger::Instance()->log(LogLevel::RX, m_rx_log_buffer);
 
 	if (!result) Logger::Instance()->log(LogLevel::ERROR, m_error_log_buffer);
 
@@ -165,10 +167,10 @@ bool ModbusMaster::readRegisters(int slave_id, int addr, int count, uint16_t* de
 bool ModbusMaster::readInputRegisters(int slave_id, int addr, int count, uint16_t* dest) {
 	bool result = true;
 	setSlave(slave_id);
-   if (modbus_read_input_registers(m_ctx, addr, count, dest) == -1) result = false; 
+   if (modbus_read_input_registers(m_ctx, addr, count, dest) == -1) result = false;
 
-	Logger::Instance()->log(LogLevel::MESSAGE, m_tx_log_buffer);
-	Logger::Instance()->log(LogLevel::MESSAGE, m_rx_log_buffer);
+	Logger::Instance()->log(LogLevel::TX, m_tx_log_buffer);
+	Logger::Instance()->log(LogLevel::RX, m_rx_log_buffer);
 
 	if (!result) Logger::Instance()->log(LogLevel::ERROR, m_error_log_buffer);
 
@@ -178,10 +180,10 @@ bool ModbusMaster::readInputRegisters(int slave_id, int addr, int count, uint16_
 bool ModbusMaster::writeBit(int slave_id, int addr, int bit) {
 	bool result = true;
 	setSlave(slave_id);
-   if (modbus_write_bit(m_ctx, addr, bit) == -1) result = false; 
+   if (modbus_write_bit(m_ctx, addr, bit) == -1) result = false;
 
-	Logger::Instance()->log(LogLevel::MESSAGE, m_tx_log_buffer);
-	Logger::Instance()->log(LogLevel::MESSAGE, m_rx_log_buffer);
+	Logger::Instance()->log(LogLevel::TX, m_tx_log_buffer);
+	Logger::Instance()->log(LogLevel::RX, m_rx_log_buffer);
 
 	if (!result) Logger::Instance()->log(LogLevel::ERROR, m_error_log_buffer);
 
@@ -191,10 +193,10 @@ bool ModbusMaster::writeBit(int slave_id, int addr, int bit) {
 bool ModbusMaster::writeBits(int slave_id, int addr, int count, const uint8_t* values) {
 	bool result = true;
 	setSlave(slave_id);
-   if (modbus_write_bits(m_ctx, addr, count, values) == -1) result = false; 
+   if (modbus_write_bits(m_ctx, addr, count, values) == -1) result = false;
 
-	Logger::Instance()->log(LogLevel::MESSAGE, m_tx_log_buffer);
-	Logger::Instance()->log(LogLevel::MESSAGE, m_rx_log_buffer);
+	Logger::Instance()->log(LogLevel::TX, m_tx_log_buffer);
+	Logger::Instance()->log(LogLevel::RX, m_rx_log_buffer);
 
 	if (!result) Logger::Instance()->log(LogLevel::ERROR, m_error_log_buffer);
 
@@ -204,10 +206,10 @@ bool ModbusMaster::writeBits(int slave_id, int addr, int count, const uint8_t* v
 bool ModbusMaster::writeRegister(int slave_id, int addr, const uint16_t value) {
 	bool result = true;
 	setSlave(slave_id);
-	if (modbus_write_register(m_ctx, addr, value) == -1) result = false; 
+	if (modbus_write_register(m_ctx, addr, value) == -1) result = false;
 
-	Logger::Instance()->log(LogLevel::MESSAGE, m_tx_log_buffer);
-	Logger::Instance()->log(LogLevel::MESSAGE, m_rx_log_buffer);
+	Logger::Instance()->log(LogLevel::TX, m_tx_log_buffer);
+	Logger::Instance()->log(LogLevel::RX, m_rx_log_buffer);
 
 	if (!result) Logger::Instance()->log(LogLevel::ERROR, m_error_log_buffer);
 
@@ -217,10 +219,10 @@ bool ModbusMaster::writeRegister(int slave_id, int addr, const uint16_t value) {
 bool ModbusMaster::writeRegisters(int slave_id, int addr, int count, const uint16_t* values) {
 	bool result = true;
 	setSlave(slave_id);
-	if (modbus_write_registers(m_ctx, addr, count, values) == -1) result = false; 
+	if (modbus_write_registers(m_ctx, addr, count, values) == -1) result = false;
 
-	Logger::Instance()->log(LogLevel::MESSAGE, m_tx_log_buffer);
-	Logger::Instance()->log(LogLevel::MESSAGE, m_rx_log_buffer);
+	Logger::Instance()->log(LogLevel::TX, m_tx_log_buffer);
+	Logger::Instance()->log(LogLevel::RX, m_rx_log_buffer);
 
 	if (!result) Logger::Instance()->log(LogLevel::ERROR, m_error_log_buffer);
 

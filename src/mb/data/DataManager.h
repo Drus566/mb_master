@@ -40,6 +40,8 @@ public:
     const std::vector<Request>& getReadRequests();
     const int getMaxCountReadRegs();
 
+    void printRegs();
+
 private:
     bool parseRanges(int slave_id, SectionsMap& map);
     bool parseRegs(int slave_id, SectionsMap& map);
@@ -52,6 +54,9 @@ private:
     RangeManager* m_range_manager;
     RegManager* m_reg_manager;
     RequestManager* m_request_manager;
+
+    bool m_print_settings;
+    bool m_print_regs;
 };
 
 } // data

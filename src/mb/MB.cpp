@@ -20,27 +20,38 @@ MB::~MB() {
 	if (m_action_manager) delete m_action_manager;
 }
 
-bool MB::start() { 
+bool MB::start() {
+	if (m_config->log()) Logger::Instance()->setActive(true);
+	Logger::Instance()->log(LogLevel::INFO, "============== Start MB ==============");
+
 	if (m_start) {
-		Logger::Instance()->log(LogLevel::INFO, "Already started\n");
+		Logger::Instance()->log(LogLevel::INFO, "Already started");
 		return false;
 	}
 
 	if (!m_data_manager->start()) return false;
 
-	Logger::Instance()->log(LogLevel::INFO, "Modbus data success initialized\n");
+	Logger::Instance()->log(LogLevel::INFO, "Modbus data success initialized");
 
 	if (!m_action_manager->start()) return false;
 
-	Logger::Instance()->log(LogLevel::INFO, "Modbus master success initialized\n");
+	Logger::Instance()->log(LogLevel::INFO, "Modbus master success initialized");
 
-	if (m_config->logMode() == LOG_TYPE_SESSION) Logger::Instance()->setActive(false); 
-	
+	Logger::Instance()->setActive(false);
+
 	m_start = true;
 	return true;
 }
 
 bool MB::isConnect() { return m_action_manager->isConnect(); }
+
+void MB::startLog() { Logger::Instance()->setActive(true); }
+
+void MB::stopLog() { Logger::Instance()->setActive(false); }
+
+void MB::startDebug() { m_action_manager->setDebug(true); }
+
+void MB::stopDebug() { m_action_manager->setDebug(false); }
 
 IMB::ModbusData* MB::getDataOnlyByName(const std::string& name) { 
 	MB::Data* result = nullptr;

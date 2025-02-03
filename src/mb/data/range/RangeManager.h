@@ -50,6 +50,8 @@ class RangeManager {
         void addRange(const int slave_id, const FuncNumber func, int start, int end);
         void normalizeRanges();
 
+        void printInfo();
+
     private:
         void addRange(const int slave_id, const FuncNumber func, Range& range);
         void normalizeRanges(const int slave_id, const FuncNumber func);

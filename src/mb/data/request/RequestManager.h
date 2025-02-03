@@ -24,6 +24,8 @@ public:
     void addRequest(int id, FuncNumber func, int addr, int quantity, MemoryChunk* mem_chunk, int offset);
     const int getMaxCountRegsRead();
     const std::vector<Request>& getReadRequests();
+    
+    void printInfo();
 
 private:
     int m_max_count_regs_read;

@@ -97,30 +97,35 @@ ActionManager::~ActionManager() {
 }
 
 bool ActionManager::start() {
-	Logger::Instance()->log(LogLevel::INFO, "Modbus master initialize...\n");
+	if (m_config->printSettings()) printInfo();
+
+	Logger::Instance()->log(LogLevel::INFO, "Modbus master initialize...");
 
 	if (m_run.load()) {
-		Logger::Instance()->log(LogLevel::INFO, "Modbus master already runned\n");
+		Logger::Instance()->log(LogLevel::INFO, "Modbus master already runned");
 		return false;
 	}
 	
 	if (!m_modbus_master->setContext()) {
-		Logger::Instance()->log(LogLevel::ERROR, "Modbus master invalid set context\n");
-		return false;
-	}
-	if (!m_modbus_master->connect()) {
-		Logger::Instance()->log(LogLevel::ERROR, "Modbus master invalid connect\n");
+		Logger::Instance()->log(LogLevel::ERROR, "Modbus master invalid set context");
 		return false;
 	}
 
-	if (m_config->logMode() != LOG_TYPE_NONE) {
-		m_modbus_master->setLog(TRUE);
-		Logger::Instance()->log(LogLevel::INFO, "Modbus master set log true\n");
+	if (!m_modbus_master->connect()) {
+		Logger::Instance()->log(LogLevel::ERROR, "Modbus master invalid connect");
+		return false;
 	}
-	if (m_config->logDebugMode()) {
-		Logger::Instance()->log(LogLevel::INFO, "Modbus master set debug true\n");
+
+	if (m_config->log()) {
+		m_modbus_master->setLog(TRUE);
+		Logger::Instance()->log(LogLevel::INFO, "Modbus master set log true");
+	}
+
+	if (m_config->debugMode()) {
+		Logger::Instance()->log(LogLevel::INFO, "Modbus master set debug true");
 		m_modbus_master->setDebug(TRUE);
 	}
+
 	m_modbus_master->setErrorRecovery(true);
 
 	m_thread = std::thread(&ActionManager::payload, 
@@ -146,6 +151,10 @@ bool ActionManager::stop() {
 bool ActionManager::isRun() { return m_run.load(); }
 
 bool ActionManager::isConnect() { return m_connect.load(); };
+
+void ActionManager::setLog(int flag) { m_modbus_master->setLog(flag); }
+
+void ActionManager::setDebug(int flag) { m_modbus_master->setDebug(flag); }
 
 void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager) {
 	m_run.store(true);
@@ -205,6 +214,56 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager) 
 		// m_mem_manager->printMemoryChunks();
 
 		std::this_thread::sleep_for(m_poll_delay);
+	}
+}
+
+void ActionManager::printInfo() {
+	if (m_config->printSettings()) {
+		std::cout << "******************************** SETTINGS *******************************" << std::endl;
+		Logger::Instance()->rawLog("******************************** SETTINGS *******************************");
+		
+		if (m_modbus_connection.type == ModbusConnectionType::RTU) {
+			std::cout << "Type=RTU" << std::endl;
+			std::cout << "SerialPort=" << m_modbus_connection.rtu.serial_port << std::endl;
+			std::cout << "Baudrate=" << m_modbus_connection.rtu.baudrate << std::endl;
+			std::cout << "StopBit=" << m_modbus_connection.rtu.stop_bit << std::endl;
+			std::cout << "DataBits=" << m_modbus_connection.rtu.data_bits << std::endl;
+			std::cout << "Parity=" << m_modbus_connection.rtu.parity << std::endl;
+
+			Logger::Instance()->rawLog("Type=RTU");
+			Logger::Instance()->rawLog("SerialPort=%s", m_modbus_connection.rtu.serial_port.c_str());
+			Logger::Instance()->rawLog("Baudrate=%d", m_modbus_connection.rtu.baudrate);
+			Logger::Instance()->rawLog("StopBit=%d", m_modbus_connection.rtu.stop_bit);
+			Logger::Instance()->rawLog("DataBits=%d", m_modbus_connection.rtu.data_bits);
+			Logger::Instance()->rawLog("Parity=%c", m_modbus_connection.rtu.parity);
+		}
+
+		else if (m_modbus_connection.type == ModbusConnectionType::ETH) {
+			std::cout << "Type=ETH(Modbus TCP)" << std::endl;
+			std::cout << "Ip=" << m_modbus_connection.eth.ip << std::endl;
+			std::cout << "Port=" << m_modbus_connection.eth.port << std::endl;
+
+			Logger::Instance()->rawLog("Type=ETH(Modbus TCP)");
+			Logger::Instance()->rawLog("Ip=%s", m_modbus_connection.eth.ip);
+			Logger::Instance()->rawLog("Port=%d", m_modbus_connection.eth.port);
+		}
+
+		std::cout << "MaxCountRegsRead=" << m_data_manager->getMaxCountReadRegs() << std::endl;
+		std::cout << "TimeBetweenRequests=" << m_time_between_requests.count() << " milliseconds" << std::endl;
+		std::cout << "ResponseTimeout=" << m_modbus_connection.response_timeout << " milliseconds" << std::endl;
+		std::cout << "ByteTimeout=" << m_modbus_connection.byte_timeout << " milliseconds" << std::endl;
+		std::cout << "PoolDelay=" << m_poll_delay.count() << " milliseconds" << std::endl;
+		std::cout << "MaxErrors=" << m_max_count_errors << std::endl;
+
+		Logger::Instance()->rawLog("MaxCountRegsRead=%d", m_data_manager->getMaxCountReadRegs());
+		Logger::Instance()->rawLog("TimeBetweenRequests=%d milliseconds", m_time_between_requests.count());
+		Logger::Instance()->rawLog("ResponseTimeout=%d milliseconds", m_modbus_connection.response_timeout);
+		Logger::Instance()->rawLog("ByteTimeout=%d milliseconds", m_modbus_connection.byte_timeout);
+		Logger::Instance()->rawLog("PoolDelay=%d milliseconds", m_poll_delay.count());
+		Logger::Instance()->rawLog("MaxErrors=%d milliseconds", m_max_count_errors);
+
+		std::cout << "*************************************************************************" << std::endl;
+		Logger::Instance()->rawLog("*************************************************************************");
 	}
 }
 

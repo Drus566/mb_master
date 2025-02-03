@@ -15,6 +15,8 @@ std::string logLevelToString(LogLevel level) {
         case WARN: return " [WARN] ";
         case ERROR: return " [ERROR] ";
         case MESSAGE: return " ";
+        case TX: return " [TX] ";
+        case RX: return " [RX] ";
         default: return " [INFO] ";
     }
 }
@@ -29,7 +31,7 @@ Logger* Logger::Instance() {
 Logger::Logger() {
     m_log_file.open(MODBUS_LOG_DEFAULT_FILENAME, std::ios::app);
     if (!m_log_file.is_open()) std::cerr << "Error open log file: " << MODBUS_LOG_DEFAULT_FILENAME << std::endl;
-    m_active = true;
+    m_active = false;
 }
 
 Logger::~Logger() {
@@ -51,6 +53,15 @@ bool Logger::setLogFile(std::string& filename) {
     if (!m_log_file.is_open()) std::cerr << "Error open log file: " << filename << std::endl;
 }
 
+void Logger::rawLog(const std::string &message) {
+    std::lock_guard<std::mutex> lock(m_mtx);
+    if (!m_active || !m_log_file.is_open())
+        return;
+
+    setCurrentTime();
+    m_log_file << message;
+}
+
 void Logger::log(LogLevel level, const std::string& message) {
     std::lock_guard<std::mutex> lock(m_mtx);
     if (!m_active || !m_log_file.is_open()) return;
@@ -59,6 +70,59 @@ void Logger::log(LogLevel level, const std::string& message) {
 
     setCurrentTime();
     m_log_file << m_current_time << logLevelToString(level) << message;
+}
+
+void Logger::rawLog(const char* format, ...) {
+    std::lock_guard<std::mutex> lock(m_mtx);
+    if (!m_active || !m_log_file.is_open()) return;
+
+    if (*format == '\0' || *format == '\n') return;
+
+    std::ostringstream oss;
+    va_list args;
+    va_start(args, format);
+
+    const char* p = format;
+    while (*p) {
+        if (*p == '%') {
+            p++;
+            switch (*p) {
+                case 'd': {
+                    int i = va_arg(args, int);
+                    oss << i;
+                    break;
+                }
+                case 'f': {
+                    double d = va_arg(args, double);
+                    oss << d;
+                    break;
+                }
+                case 'c': {
+                    int c = va_arg(args, int);
+                    oss << static_cast<char>(c);
+                    break;
+                }
+                case 's': {
+                    char* s = va_arg(args, char*);
+                    oss << s;
+                    break;
+                }
+                case '%':
+                    oss << '%';
+                    break;
+                default:
+                    oss << '%' << *p;
+            }
+        } else {
+            oss << *p;
+        }
+        p++;
+    }
+
+    va_end(args);
+
+    setCurrentTime();
+    m_log_file << oss.str() << std::endl;
 }
 
 void Logger::log(LogLevel level, const char* format, ...) {

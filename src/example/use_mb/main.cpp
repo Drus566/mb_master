@@ -12,6 +12,7 @@ int main(void) {
 		std::cout << "mb start error" << std::endl;
 		return 0;
 	}
+
 	mb::IMB::ModbusData* d = mb->getData(300,1);
 	mb::IMB::ModbusData* d1 = mb->getData(301,1);
 	mb::IMB::ModbusData* d2 = mb->getData(302,1);
@@ -62,7 +63,7 @@ int main(void) {
 		// // std::cout << "308: " << d9->getFloat() << std::endl;
 
 		// std::cout << "**************" << std::endl;
-		std::cout << "PRIVET" << std::endl;
+		// std::cout << "PRIVET" << std::endl;
 		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	}
 	// g.getBit();

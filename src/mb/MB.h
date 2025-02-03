@@ -22,7 +22,12 @@ public:
 
 	bool start() override;
    bool isConnect() override;
-   
+
+   void startLog() override;
+   void stopLog() override;
+   void startDebug() override;
+   void stopDebug() override;
+
    IMB::ModbusData* getDataOnlyByName(const std::string& name);
    IMB::ModbusData* getData(const std::string& name, const int func, const int slave_id) override;
    IMB::ModbusData* getData(const int addr, const int func, const int slave_id) override;

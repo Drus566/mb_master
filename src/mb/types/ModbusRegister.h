@@ -35,6 +35,8 @@ struct Register {
     
     bool isCoil() const { return function == FuncNumber::READ_COIL || function == FuncNumber::READ_INPUT_COIL; }
     bool isWord() const { return !isCoil(); }
+    bool isDword() const { return isWord() && (reg_info.data_type == RegDataType::FLOAT32 || reg_info.data_type == RegDataType::INT32 || reg_info.data_type == RegDataType:: UINT32); }
+    bool isFloat() const { return isWord() && (reg_info.data_type == RegDataType::FLOAT16 || reg_info.data_type == RegDataType::FLOAT32); }
     // bool isWrite() const { return is_write; }
 };
 

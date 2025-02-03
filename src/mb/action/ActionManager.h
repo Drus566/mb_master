@@ -31,6 +31,11 @@ public:
 	bool isRun();
 	bool isConnect();
 
+	void setDebug(int flag);
+	void setLog(int flag);
+
+	void printInfo();
+
 private:
 	ModbusConnection m_modbus_connection;
   	ModbusMaster* m_modbus_master;

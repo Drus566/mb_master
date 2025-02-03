@@ -28,6 +28,11 @@ public:
 	virtual bool start() = 0;
     virtual bool isConnect() = 0;
     
+    virtual void startLog() = 0;
+    virtual void stopLog() = 0;
+    virtual void startDebug() = 0;
+    virtual void stopDebug() = 0;
+
     virtual ModbusData* getDataOnlyByName(const std::string& name) = 0;
     virtual ModbusData* getData(const std::string& name, const int func, const int slave_id = 1) = 0;
     virtual ModbusData* getData(const int addr, const int func, const int slave_id = 1) = 0;

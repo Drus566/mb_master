@@ -1,7 +1,10 @@
 #include "RangeManager.h"
+#include "Logger.h"
 
 namespace mb {
 namespace data {
+
+using namespace mb::log;
 
 void RangeManager::addRange(const int slave_id, const FuncNumber func, Range& range) {
 	std::vector<Range>& ranges = m_ranges[slave_id][func];
@@ -112,6 +115,35 @@ bool RangeManager::tryMergeRanges(Range& r1, const Range& r2) const {
 }
 
 RangesMap& RangeManager::getRanges() { return m_ranges; }
+
+void RangeManager::printInfo() {
+	std::cout << "********************************* RANGES ********************************" << std::endl;
+	Logger::Instance()->rawLog("********************************* RANGES ********************************");
+
+	for (const auto& out_pair : m_ranges) {
+		int slave_id = out_pair.first;
+		const InnerMap& inner_map = out_pair.second;
+
+		std::cout << "== SLAVE_ID " << slave_id << std::endl;
+		Logger::Instance()->rawLog("== SLAVE_ID %d", slave_id);
+
+		for (const auto& inner_pair : inner_map) {
+			FuncNumber func = inner_pair.first;
+			const std::vector<Range>& ranges = inner_pair.second;
+
+			std::cout << "=== FUNC " << func << std::endl;
+			Logger::Instance()->rawLog("=== FUNC %d", func);
+
+			for (const Range& range : ranges) {
+				std::cout << "[" << range.start << "-" << range.end << "]" << std::endl;
+				Logger::Instance()->rawLog("[%d-%d]", range.start, range.end);
+			}
+		}
+	}
+
+	std::cout << "*************************************************************************" << std::endl;
+	Logger::Instance()->rawLog("*************************************************************************");
+}
 
 
 } // data

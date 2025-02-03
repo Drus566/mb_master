@@ -11,8 +11,12 @@
 namespace mb {
 namespace data {
 
+using namespace mb::log;
+
 DataManager::DataManager(Config* config, MemManager* mem_manager) : m_config(config),
-                                                                    m_mem_manager(mem_manager) {}
+                                                                    m_mem_manager(mem_manager),
+                                                                    m_print_settings(false),
+                                                                    m_print_regs(false) {}
 
 DataManager::~DataManager() {
    if (m_range_manager) delete m_range_manager;
@@ -21,14 +25,17 @@ DataManager::~DataManager() {
 }
 
 bool DataManager::start() {
-    Logger::Instance()->log(LogLevel::INFO, "Modbus data initialize...\n");
+    Logger::Instance()->log(LogLevel::INFO, "Modbus data initialize...");
 
     bool result = false;
+
+    m_print_settings = m_config->printSettings();
+    m_print_regs = m_config->printRegs();
 
     int mcbr = m_config->maxCountRegsRead();
     if (mcbr <= 0) mcbr = DEFAULT_MAX_COUNT_REGS_READ;
 
-    Logger::Instance()->log(LogLevel::INFO, "Max count regs read %d\n", DEFAULT_MAX_COUNT_REGS_READ);
+    // Logger::Instance()->log(LogLevel::INFO, "Max count regs read %d", mcbr);
 
     m_range_manager = new RangeManager;
     m_reg_manager = new RegManager;
@@ -36,32 +43,35 @@ bool DataManager::start() {
 
     int slave_id = m_config->slaveId();
 
-    Logger::Instance()->log(LogLevel::INFO, "Slave id %d\n", slave_id);
-
     SectionsMap map;
     map = m_config->getAreas(map);
     if (map.empty()) {
-        Logger::Instance()->log(LogLevel::ERROR, "Section map is empty\n");
+        Logger::Instance()->log(LogLevel::ERROR, "Section map is empty");
         return false;
     }
 
     result = parseRanges(slave_id, map);
     if (!result) {
-        Logger::Instance()->log(LogLevel::ERROR, "Uncorrect parse ranges\n");
+        Logger::Instance()->log(LogLevel::ERROR, "Uncorrect parse ranges");
         return false;
     }
+
+    if (m_config->printRanges()) m_range_manager->printInfo();
 
     map.clear();
     map = m_config->getRegs(map);
     if (!map.empty()) {
         result = parseRegs(slave_id, map);
         if (!result) { 
-            Logger::Instance()->log(LogLevel::ERROR, "Uncorrect parse regs\n");
+            Logger::Instance()->log(LogLevel::ERROR, "Uncorrect parse regs");
             return false;
         }
     }
 
     createRequests();
+
+    if (m_config->printRegs()) m_reg_manager->printInfo();
+    if (m_config->printRequests()) m_request_manager->printInfo();
     
     return result;
 }
@@ -91,7 +101,11 @@ bool DataManager::parseRanges(int slave_id, SectionsMap& map) {
             pure_section = section_slave[0];
         }
         else pure_section = section;
-        // std::cout << section << std::endl;
+        
+        // if (m_print_regs) {
+        //     std::cout << "Section - [" << section << "]" << std::endl;
+        //     Logger::Instance()->rawLog("Section - [%s]", section.c_str());
+        // }
         
         /* Get params */
         const auto& params_list = map[section];
@@ -106,7 +120,10 @@ bool DataManager::parseRanges(int slave_id, SectionsMap& map) {
                     else if (param_key_str == HOLDING_REGISTERS_KEY) function = FuncNumber::READ_REGS;
                 }
                 m_range_manager->addRange(current_slave_id, function, range_str);
-                // std::cout << param.first << ": " << param.second << std::endl;
+                // if (m_print_regs) {
+                //     std::cout << param.first << ": " << param.second << std::endl;
+                //     Logger::Instance()->rawLog("%s: %s", param.first.c_str(), param.second.c_str());
+                // }
             }
         }
         result = true;
@@ -163,15 +180,22 @@ bool DataManager::parseRegs(int slave_id, SectionsMap& map) {
         }
         else pure_section = current_section;
 
-        std::cout << section << std::endl;
-        
+        // if (m_print_regs) {
+        //     std::cout << "Section - [" << section << "]" << std::endl;
+        //     Logger::Instance()->rawLog("Section - [%s]", section.c_str());
+        // }
+
         /* Get params */
         const auto& params_list = map[section];
         for (const auto& params: params_list) {
             for (const auto& param : params) {
                 std::string val = param.second;
                 m_reg_manager->addReg(is_describe, current_slave_id, function, param.first, val);
-                std::cout << param.first << ": " << param.second << std::endl;
+
+                // if (m_print_regs) {
+                //     std::cout << param.first << ": " << param.second << std::endl;
+                //     Logger::Instance()->rawLog("%s: %s", param.first.c_str(), param.second.c_str());
+                // }
             }
         }
         result = true;

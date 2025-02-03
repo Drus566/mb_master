@@ -1,9 +1,14 @@
 #include "RegManager.h"
+#include "Logger.h"
 
 #include <iostream>
+#include <sstream>
+#include <string>
 
 namespace mb {
 namespace data {
+
+using namespace mb::log;
 
 bool RegManager::parseReadReg(const bool is_describe, const std::string& reg_str, int& address, RegisterInfo& reg_info) {
 	bool result = false;
@@ -132,6 +137,35 @@ Register* RegManager::addReadReg(const int address, const int slave_id, const Fu
 }
 
 std::forward_list<Register>& RegManager::getReadRegs() { return m_regs; }
+
+void RegManager::printInfo() {
+	std::cout << "** REGISTERS [name, slave_id, func, addr, data_type, order, precision] **" << std::endl;
+	Logger::Instance()->rawLog("** REGISTERS [name, slave_id, func, addr, data_type, order, precision] **");
+
+	for (const Register& r : m_regs) {
+		printRegInfo(r);
+	}
+
+	std::cout << "*************************************************************************" << std::endl;
+	Logger::Instance()->rawLog("*************************************************************************");
+}
+
+void RegManager::printRegInfo(const Register& r) {
+	std::ostringstream oss;
+	oss << "[" << r.name << "," << r.slave_id << ","
+		 << r.function << "," << r.address;
+
+	if (r.isWord()) {
+		oss << "," << RegDataTypeToString(r.reg_info.data_type);
+		if (r.isDword()) oss << "," << RegDataOrderToString(r.reg_info.order);
+		if (r.isFloat()) oss << "," << static_cast<int>(r.reg_info.precision);
+	}
+	oss << "]";
+
+	std::cout << oss.str() << std::endl;
+
+	Logger::Instance()->rawLog("%s", oss.str().c_str());
+}
 
 } // data
 } // mb

@@ -45,9 +45,13 @@ class Config {
     std::chrono::milliseconds pollDelay() const { return get<std::chrono::milliseconds>(SETTINGS_SECTION, "PollDelay"); }
     unsigned int maxCountErrors() const { return get<unsigned int>(SETTINGS_SECTION, "MaxCountErrors"); }
 
+    bool log() const { return getBool(SETTINGS_SECTION, "Log"); }
     std::string logFile() const { return getString(SETTINGS_SECTION, "LogFile"); }
-    std::string logMode() const { return getString(SETTINGS_SECTION, "LogMode"); }
-    bool logDebugMode() const { return getBool(SETTINGS_SECTION, "LogDebugMode"); }
+    bool debugMode() const { return getBool(SETTINGS_SECTION, "DebugMode"); }
+    bool printSettings() const { return getBool(SETTINGS_SECTION, "PrintSettings"); }
+    bool printRegs() const { return getBool(SETTINGS_SECTION, "PrintRegs"); }
+    bool printRequests() const { return getBool(SETTINGS_SECTION, "PrintRequests"); }
+    bool printRanges() const { return getBool(SETTINGS_SECTION, "PrintRanges"); }
 
     SectionsMap& getRegs(SectionsMap& map) {
       std::vector<std::string> sections = m_config.sections();

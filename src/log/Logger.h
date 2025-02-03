@@ -18,6 +18,8 @@ enum LogLevel {
     INFO,
     WARN,
     ERROR,
+    TX,
+    RX,
     MESSAGE
 };
 
@@ -27,7 +29,9 @@ class Logger {
 public:
     static Logger* Instance();
     bool setLogFile(std::string& filename);
+    void rawLog(const std::string &message);
     void log(LogLevel level, const std::string& message);
+    void rawLog(const char *format, ...);
     void log(LogLevel level, const char* format, ...);
     bool setActive(bool mode);
 

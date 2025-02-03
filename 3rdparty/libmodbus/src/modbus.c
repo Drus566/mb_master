@@ -90,7 +90,7 @@ void _error_print(modbus_t *ctx, const char *context)
 
     if (ctx->log) {
         int ret;
-        ret = sprintf(ctx->error_log_buffer, "ERROR %s", modbus_strerror(errno));
+        ret = sprintf(ctx->error_log_buffer, "%s", modbus_strerror(errno));
         if (context != NULL) {
             sprintf(ctx->error_log_buffer + ret, ": %s", context);
         }
@@ -170,10 +170,12 @@ static unsigned int compute_response_length_from_request(modbus_t *ctx, uint8_t 
 /* Sends a request/response */
 static int send_msg(modbus_t *ctx, uint8_t *msg, int msg_length)
 {
-    *ctx->error_log_buffer = '\0';
-    *ctx->rx_log_buffer = '\0';
-    *ctx->tx_log_buffer = '\0';
-
+    if (ctx->log) {
+        *ctx->error_log_buffer = '\0';
+        *ctx->rx_log_buffer = '\0';
+        *ctx->tx_log_buffer = '\0';
+    }
+    
     int ret;
     int rc;
     int i;
@@ -399,7 +401,7 @@ int _modbus_receive_msg(modbus_t *ctx, uint8_t *msg, msg_type_t msg_type)
             fprintf(stderr, "ERROR The connection is not established.\n");
         }
         if (ctx->log) {
-            sprintf(ctx->error_log_buffer, "ERROR The connection is not established");
+            sprintf(ctx->error_log_buffer, "The connection is not established");
         }
         return -1;
     }
@@ -1356,7 +1358,7 @@ int modbus_read_bits(modbus_t *ctx, int addr, int nb, uint8_t *dest)
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Too many bits requested (%d > %d)",
+                    "Too many bits requested (%d > %d)",
                     nb,
                     MODBUS_MAX_READ_BITS);
         }
@@ -1392,7 +1394,7 @@ int modbus_read_input_bits(modbus_t *ctx, int addr, int nb, uint8_t *dest)
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Too many discrete inputs requested (%d > %d)",
+                    "Too many discrete inputs requested (%d > %d)",
                     nb,
                     MODBUS_MAX_READ_BITS);
         }
@@ -1425,7 +1427,7 @@ static int read_registers(modbus_t *ctx, int function, int addr, int nb, uint16_
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Too many registers requested (%d > %d)",
+                    "Too many registers requested (%d > %d)",
                     nb,
                     MODBUS_MAX_READ_REGISTERS);
         }
@@ -1479,7 +1481,7 @@ int modbus_read_registers(modbus_t *ctx, int addr, int nb, uint16_t *dest)
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Too many registers requested (%d > %d)",
+                    "Too many registers requested (%d > %d)",
                     nb,
                     MODBUS_MAX_READ_REGISTERS);
         }
@@ -1511,7 +1513,7 @@ int modbus_read_input_registers(modbus_t *ctx, int addr, int nb, uint16_t *dest)
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Too many input registers requested (%d > %d)",
+                    "Too many input registers requested (%d > %d)",
                     nb,
                     MODBUS_MAX_READ_REGISTERS);
         }
@@ -1602,7 +1604,7 @@ int modbus_write_bits(modbus_t *ctx, int addr, int nb, const uint8_t *src)
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Writing too many bits (%d > %d)",
+                    "Writing too many bits (%d > %d)",
                     nb,
                     MODBUS_MAX_WRITE_BITS);
         }
@@ -1670,7 +1672,7 @@ int modbus_write_registers(modbus_t *ctx, int addr, int nb, const uint16_t *src)
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Trying to write to too many registers (%d > %d)",
+                    "Trying to write to too many registers (%d > %d)",
                     nb,
                     MODBUS_MAX_WRITE_REGISTERS);
         }
@@ -1772,7 +1774,7 @@ int modbus_write_and_read_registers(modbus_t *ctx,
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Too many registers to write (%d > %d)",
+                    "Too many registers to write (%d > %d)",
                     write_nb,
                     MODBUS_MAX_WR_WRITE_REGISTERS);
         }
@@ -1789,7 +1791,7 @@ int modbus_write_and_read_registers(modbus_t *ctx,
         }
         if (ctx->log) {
             sprintf(ctx->error_log_buffer,
-                    "ERROR Too many registers requested (%d > %d)",
+                    "Too many registers requested (%d > %d)",
                     read_nb,
                     MODBUS_MAX_WR_READ_REGISTERS);
         }
