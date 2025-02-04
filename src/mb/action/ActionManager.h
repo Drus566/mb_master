@@ -7,6 +7,8 @@
 #include "ModbusConnection.h"
 #include "ModbusRequest.h"
 #include "Queue.h"
+#include "ObjectPool.h"
+#include "DirectRequest.h"
 
 #include <chrono>
 #include <thread>
@@ -25,18 +27,18 @@ using namespace mb::mem;
 
 class ActionManager {    
 public:
-   ActionManager(Config* config, DataManager* data_manager, MemManager* mem_manager);
-   ~ActionManager();
+   	ActionManager(Config* config, DataManager* data_manager, MemManager* mem_manager);
+   	~ActionManager();
 	
-   bool start();
+   	bool start();
 	bool stop();
 	bool isRun();
 	bool isConnect();
 
-	bool addOutRequest();
-
 	void setDebug(int flag);
 	void setLog(int flag);
+
+	bool f1(uint8_t *val, int slave_id, int addr, int count);
 
 	void printInfo();
 
@@ -57,17 +59,10 @@ private:
 	
 	int m_max_count_errors;
 
-	Queue<OutRequest> m_out_requests;
+	ObjectPool<DirectRequest> m_pool_out_requests;
+	Queue<DirectRequest*> m_queue_out_requests;
 
 	void payload(DataManager* data_manager, MemManager* mem_manager);
-
-	class OutRequestQueue {
-		OutRequest queue[20];
-		int count;
-
-		void push();
-		void pop();
-	};
 };
 
 } // action

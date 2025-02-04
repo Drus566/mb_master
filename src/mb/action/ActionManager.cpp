@@ -16,6 +16,8 @@
 #define DEFAULT_IP "127.0.0.1"
 #define DEFAULT_PORT 502
 
+#define POOL_OUT_REQUESTS_SIZE 20
+
 #include "ActionManager.h"
 
 #include "ModbusMaster.h"
@@ -30,10 +32,12 @@ namespace action {
 ActionManager::ActionManager(Config* config, 
 							 DataManager* data_manager,
 							 MemManager* mem_manager) : m_config(config), 
-									  							 m_data_manager(data_manager),
-																 m_mem_manager(mem_manager),
-							   		  						 m_run(false),
-																 m_connect(false) {
+									  					m_data_manager(data_manager),
+														m_mem_manager(mem_manager),
+							   		  					m_run(false),
+														m_connect(false),
+														m_pool_out_requests(POOL_OUT_REQUESTS_SIZE),
+														m_queue_out_requests() {
 
 	std::chrono::milliseconds response_timeout = m_config->responseTimeout();
 	std::chrono::milliseconds byte_timeout = m_config->byteTimeout();
@@ -157,6 +161,52 @@ void ActionManager::setLog(int flag) { m_modbus_master->setLog(flag); }
 
 void ActionManager::setDebug(int flag) { m_modbus_master->setDebug(flag); }
 
+bool ActionManager::f1(uint8_t *val, int id, int addr, int count) {
+	// m_pool_out_requests;
+	// Queue<OutRequest> m_queue_out_requests;
+	OutRequest* out_req = m_pool_out_requests.acquire();
+	out_req->address = addr;
+	out_req->slave_id = id;
+	out_req->quantity = count;
+	out_req->function = FuncNumber::READ_COIL;
+	out_req->u8_out_mem = val;
+	out_req->finish = false;
+
+	m_queue_out_requests.push(out_req);
+
+	while (!out_req->finish) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
+
+//     // Получаем объекты из пула
+//     Particle* p1 = particlePool.acquire();
+//     Particle* p2 = particlePool.acquire();
+
+//     if (p1) p1->init(10, 20);
+//     if (p2) p2->init(30, 40);
+
+//     particlePool.debug();
+
+//     if (p1) p1->display();
+//     if (p2) p2->display();
+
+//     // Возвращаем объекты в пул
+//     particlePool.release(p1);
+//     particlePool.release(p2);
+
+//     particlePool.debug();
+	return true;
+}
+// bool ActionManager::f1(std::string &name, uint8_t *val) override;
+// bool ActionManager::f2(uint8_t *val, int slave_id, int addr, int count) override;
+// bool ActionManager::f2(std::string &name, uint8_t *val) override;
+// bool ActionManager::f3(uint16_t *val, int slave_id, int addr, int count) override;
+// bool ActionManager::f3(std::string &name, uint16_t *val) override;
+// bool ActionManager::f4(uint16_t *val, int slave_id, int addr, int count) override;
+// bool ActionManager::f4(std::string &name, uint16_t *val) override;
+// bool ActionManager::f5(uint8_t val, int slave_id, int adr) override;
+// bool ActionManager::f5(std::string &name, uint8_t val) override;
+
 void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager) {
 	m_run.store(true);
 
@@ -168,7 +218,7 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager) 
 	uint16_t* u16_ptr = buffer;
 	int error;
 	bool response;
-	OutRequest r;
+	OutRequest* r;
 
 	while (m_run.load()) {
 		for (const auto& request : read_requests) {
@@ -211,23 +261,23 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager) 
 			std::this_thread::sleep_for(m_time_between_requests);
 			
 			// TODO: check out requests
-			while (!m_out_requests.empty()) {
-				if (m_out_requests.pop(r)) {
+			while (!m_queue_out_requests.empty()) {
+				if (m_queue_out_requests.pop(r)) {
 					switch (request.function) {
 						case FuncNumber::WRITE_SINGLE_COIL:
-							response = m_modbus_master->readBits(r.slave_id, r.address, r.quantity, r.u8_out_mem);
+							response = m_modbus_master->readBits(r->slave_id, r->address, r->quantity, r->u8_out_mem);
 							break;
 
 						case FuncNumber::WRITE_MULTIPLE_COILS:
-							response = m_modbus_master->readInputBits(r.slave_id, r.address, r.quantity, r.u8_out_mem);
+							response = m_modbus_master->readInputBits(r->slave_id, r->address, r->quantity, r->u8_out_mem);
 							break;
 
 						case FuncNumber::WRITE_SINGLE_WORD:
-							response = m_modbus_master->readRegisters(r.slave_id, r.address, r.quantity, r.u16_out_mem);
+							response = m_modbus_master->readRegisters(r->slave_id, r->address, r->quantity, r->u16_out_mem);
 							break;
 
 						case FuncNumber::WRITE_MULTIPLE_WORDS:
-							response = m_modbus_master->readInputRegisters(r.slave_id, r.address, r.quantity, r.u16_out_mem);
+							response = m_modbus_master->readInputRegisters(r->slave_id, r->address, r->quantity, r->u16_out_mem);
 							break;
 					}
 				}

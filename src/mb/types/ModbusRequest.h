@@ -7,27 +7,6 @@
 namespace mb {
 namespace types {
 
-struct OutRequest {
-	OutRequest() {}
-	OutRequest(int id, FuncNumber func, int addr, int quantity, 
-				  uint16_t* u16_mem, uint8_t* u8_mem) : slave_id(id),
-																	 function(func),
-																	 address(addr),
-																	 quantity(quantity),
-																	 u16_out_mem(u16_mem),
-																	 u8_out_mem(u8_mem) {}
-	bool active;
-	bool finish;
-
-	int slave_id;
-	FuncNumber function;
-	int address;
-	int quantity;
-
-	uint16_t *u16_out_mem;
-	uint8_t *u8_out_mem;
-};
-
 struct Request {
 	Request(int id, 
 			  FuncNumber func, 
