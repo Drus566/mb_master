@@ -1,4 +1,0 @@
-2025-02-03 13:51:12 [INFO] Modbus data initialize...s
-2025-02-03 13:51:12 [INFO] Max count regs read 8
-2025-02-03 13:51:12 [INFO] Slave id 0
-2025-02-03 13:51:12 [ERROR] Section map is empty

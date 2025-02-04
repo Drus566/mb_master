@@ -53,6 +53,62 @@ void MB::startDebug() { m_action_manager->setDebug(true); }
 
 void MB::stopDebug() { m_action_manager->setDebug(false); }
 
+bool MB::f1(uint8_t *val, int slave_id, int addr, int count) {
+	return true;
+}
+bool MB::f1(std::string &name, uint8_t *val) {
+	return true;
+}
+
+bool MB::f2(uint8_t *val, int slave_id, int addr, int count) {
+	return true;
+}
+bool MB::f2(std::string &name, uint8_t *val) {
+	return true;
+}
+
+bool MB::f3(uint16_t *val, int slave_id, int addr, int count) {
+	return true;
+}
+bool MB::f3(std::string &name, uint16_t *val) {
+	return true;
+}
+
+bool MB::f4(uint16_t *val, int slave_id, int addr, int count) {
+	return true;
+}
+bool MB::f4(std::string &name, uint16_t *val) {
+	return true;
+}
+
+bool MB::f5(uint8_t val, int slave_id, int adr) {
+	return true;
+}
+bool MB::f5(std::string &name, uint8_t val) {
+	return true;
+}
+
+bool MB::f6(uint8_t *vals, int slave_id, int adr) {
+	return true;
+}
+bool MB::f6(std::string &name, uint8_t *vals, int count) {
+	return true;
+}
+
+bool MB::f15(uint16_t val, int slave_id, int adr) {
+	return true;
+}
+bool MB::f15(std::string &name, uint16_t val) {
+	return true;
+}
+
+bool MB::f16(uint16_t *vals, int slave_id, int adr, int count) {
+	return true;
+}
+bool MB::f16(std::string &name, uint16_t *vals, int count) {
+	return true;
+}
+
 IMB::ModbusData* MB::getDataOnlyByName(const std::string& name) { 
 	MB::Data* result = nullptr;
 	Register* reg = nullptr;
@@ -65,7 +121,7 @@ IMB::ModbusData* MB::getDataOnlyByName(const std::string& name) {
 			u8_data_ptr = m_data_manager->findU8DataMemory(reg->address, reg->function, reg->slave_id);
 			if (u8_data_ptr) result = new MB::Data(m_mem_manager, reg, u16_data_ptr, u8_data_ptr);
 		}
-		else  {
+		else {
 			u16_data_ptr = m_data_manager->findU16DataMemory(reg->address, reg->function, reg->slave_id);
 			if (u16_data_ptr) result = new MB::Data(m_mem_manager, reg, u16_data_ptr, u8_data_ptr);
 		}

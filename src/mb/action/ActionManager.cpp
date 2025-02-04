@@ -30,10 +30,11 @@ namespace action {
 ActionManager::ActionManager(Config* config, 
 							 DataManager* data_manager,
 							 MemManager* mem_manager) : m_config(config), 
-									  					m_data_manager(data_manager),
-														m_mem_manager(mem_manager),
-							   		  				m_run(false),
-														m_connect(false) {
+									  							 m_data_manager(data_manager),
+																 m_mem_manager(mem_manager),
+							   		  						 m_run(false),
+																 m_connect(false) {
+
 	std::chrono::milliseconds response_timeout = m_config->responseTimeout();
 	std::chrono::milliseconds byte_timeout = m_config->byteTimeout();
 
@@ -167,6 +168,7 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager) 
 	uint16_t* u16_ptr = buffer;
 	int error;
 	bool response;
+	OutRequest r;
 
 	while (m_run.load()) {
 		for (const auto& request : read_requests) {
@@ -187,10 +189,9 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager) 
 					break;
 
 				case FuncNumber::READ_INPUT_REGS:
-					response = m_modbus_master->readRegisters(request.slave_id, request.address, request.quantity, u16_ptr); 
+					response = m_modbus_master->readInputRegisters(request.slave_id, request.address, request.quantity, u16_ptr); 
 					if (response) mem_manager->writeMem(u16_ptr, request.mem_chunk->u16_ptr, request.quantity, request.offset_mem_chunk);
 					break;
-
 			}			
 
 			if (!response) { 
@@ -208,11 +209,31 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager) 
 			}
 
 			std::this_thread::sleep_for(m_time_between_requests);
+			
 			// TODO: check out requests
+			while (!m_out_requests.empty()) {
+				if (m_out_requests.pop(r)) {
+					switch (request.function) {
+						case FuncNumber::WRITE_SINGLE_COIL:
+							response = m_modbus_master->readBits(r.slave_id, r.address, r.quantity, r.u8_out_mem);
+							break;
+
+						case FuncNumber::WRITE_MULTIPLE_COILS:
+							response = m_modbus_master->readInputBits(r.slave_id, r.address, r.quantity, r.u8_out_mem);
+							break;
+
+						case FuncNumber::WRITE_SINGLE_WORD:
+							response = m_modbus_master->readRegisters(r.slave_id, r.address, r.quantity, r.u16_out_mem);
+							break;
+
+						case FuncNumber::WRITE_MULTIPLE_WORDS:
+							response = m_modbus_master->readInputRegisters(r.slave_id, r.address, r.quantity, r.u16_out_mem);
+							break;
+					}
+				}
+				std::this_thread::sleep_for(m_time_between_requests);
+			}
 		}
-
-		// m_mem_manager->printMemoryChunks();
-
 		std::this_thread::sleep_for(m_poll_delay);
 	}
 }

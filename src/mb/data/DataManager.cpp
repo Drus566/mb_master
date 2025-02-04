@@ -102,11 +102,6 @@ bool DataManager::parseRanges(int slave_id, SectionsMap& map) {
         }
         else pure_section = section;
         
-        // if (m_print_regs) {
-        //     std::cout << "Section - [" << section << "]" << std::endl;
-        //     Logger::Instance()->rawLog("Section - [%s]", section.c_str());
-        // }
-        
         /* Get params */
         const auto& params_list = map[section];
         for (const auto& params: params_list) {
@@ -120,10 +115,6 @@ bool DataManager::parseRanges(int slave_id, SectionsMap& map) {
                     else if (param_key_str == HOLDING_REGISTERS_KEY) function = FuncNumber::READ_REGS;
                 }
                 m_range_manager->addRange(current_slave_id, function, range_str);
-                // if (m_print_regs) {
-                //     std::cout << param.first << ": " << param.second << std::endl;
-                //     Logger::Instance()->rawLog("%s: %s", param.first.c_str(), param.second.c_str());
-                // }
             }
         }
         result = true;
@@ -180,22 +171,12 @@ bool DataManager::parseRegs(int slave_id, SectionsMap& map) {
         }
         else pure_section = current_section;
 
-        // if (m_print_regs) {
-        //     std::cout << "Section - [" << section << "]" << std::endl;
-        //     Logger::Instance()->rawLog("Section - [%s]", section.c_str());
-        // }
-
         /* Get params */
         const auto& params_list = map[section];
         for (const auto& params: params_list) {
             for (const auto& param : params) {
                 std::string val = param.second;
                 m_reg_manager->addReg(is_describe, current_slave_id, function, param.first, val);
-
-                // if (m_print_regs) {
-                //     std::cout << param.first << ": " << param.second << std::endl;
-                //     Logger::Instance()->rawLog("%s: %s", param.first.c_str(), param.second.c_str());
-                // }
             }
         }
         result = true;
@@ -358,6 +339,7 @@ uint16_t* DataManager::findU16DataMemory(const int addr, const int func, const i
 const std::vector<Request>& DataManager::getReadRequests() { return m_request_manager->getReadRequests(); }
 
 const int DataManager::getMaxCountReadRegs() { return m_request_manager->getMaxCountRegsRead(); }
+
 // uint16_t DataManager::getCoil(uint16_t* ptr) { 
 //     uint16_t val;
 //     m_mem_manager->getWord(&val, ptr); 

@@ -35,6 +35,41 @@ int main(void) {
 	mb::IMB::ModbusData* d12 = mb->getData(314,3);
 	mb::IMB::ModbusData* d13 = mb->getData(316,3);
 
+	// mb->writeRaw(uint16_t* vals, int slave_id, int adr, int func, int count);
+
+	// bool mb->readF1(uint8_t* val, int slave_id, int addr, int count);
+	// bool mb->readF1("NAME", uint8_t* val);
+
+	// bool mb->readF2(uint8_t* val, int slave_id, int addr, int count);
+	// bool mb->readF2("NAME", uint8_t* val)
+
+	// bool mb->readF3(uint16_t* val, int slave_id, int addr, int count);
+	// bool mb->readF3("NAME", uint16_t* val);
+
+	// bool mb->readF4(uint16_t *val, int slave_id, int addr, int count);
+	// bool mb->readF4("NAME", uint16_t *val);
+
+	// // name, val
+	// bool mb->writeF5(uint8_t val, int slave_id, int adr);
+	// bool mb->writeF5("CCS_START", uint8_t val);
+	// // name, u8[], count;
+	// bool mb->writeF6(uint8_t* vals, int slave_id, int adr);
+	// bool mb->writeF6("CCS_START", uint8_t *vals, count);
+
+	// bool mb->writeF15(uint16_t val, int slave_id, int adr);
+	// bool mb->writeF15("name", uint16_t val);
+
+	// bool mb->writeF16(uint16_t *vals, int slave_id, int adr, int count);
+	// bool mb->writeF16("name", uint16_t *vals, count);
+
+	// value, slave, addr
+	// slave, addr
+	// value, addr
+	// d10->writeRegValue(val, addr, slave = default_slave);
+	// d10->writeReg(adr, slave = default_adr);
+	// d10->writeRegsValue(val, addr, slave = default_slave);
+	// d10->writeRegs(adr, slave = default_adr);
+
 	// mb::IMB::IData* d7 = mb->getData(303,3);
 
 	// if (g == nullptr) std::cout << "GGWP" << std::endl;
