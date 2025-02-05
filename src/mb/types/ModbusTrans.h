@@ -13,8 +13,7 @@ namespace mb {
 namespace types {
 
 class ModbusTrans {
-public:
-	
+public:    
     template <typename T>
     static void interpretReg16(T& result, uint16_t reg, Register& r) {
       	T val = 0;

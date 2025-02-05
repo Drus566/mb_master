@@ -119,9 +119,16 @@ inline bool isReadFunc(const FuncNumber& func) {
             func == FuncNumber::READ_REGS || func == FuncNumber::READ_INPUT_REGS);
 }
 
-inline bool isCoilFunc(const FuncNumber& func) { 
-    return (func == FuncNumber::READ_COIL || func == FuncNumber::READ_INPUT_COIL);
+inline bool isCoilFunc(const FuncNumber& func) {
+    return (func == FuncNumber::READ_COIL || func == FuncNumber::READ_INPUT_COIL ||
+            func == FuncNumber::WRITE_SINGLE_COIL || func == FuncNumber::WRITE_MULTIPLE_COILS);
 }
+
+inline bool isCoilFunc(const int func) {
+    return (func == FuncNumber::READ_COIL || func == FuncNumber::READ_INPUT_COIL ||
+            func == FuncNumber::WRITE_SINGLE_COIL || func == FuncNumber::WRITE_MULTIPLE_COILS);
+}
+
 
 inline bool isWriteMultipleFunc(const FuncNumber& func) { return (func == FuncNumber::WRITE_MULTIPLE_COILS || func == FuncNumber::WRITE_MULTIPLE_WORDS); }
 

@@ -44,29 +44,8 @@ public:
    // Data getInputRegisterData(const std::string& name, const int slave_id = MB_DEFAULT_SLAVE) override; 
    // Data getInputRegisterData(const int addr, const int slave_id = MB_DEFAULT_SLAVE) override;
 
-   bool f1(uint8_t *val, int slave_id, int addr, int count) override;
-   bool f1(std::string &name, uint8_t *val) override;
-
-   bool f2(uint8_t *val, int slave_id, int addr, int count) override;
-   bool f2(std::string &name, uint8_t *val) override;
-
-   bool f3(uint16_t *val, int slave_id, int addr, int count) override;
-   bool f3(std::string &name, uint16_t *val) override;
-
-   bool f4(uint16_t *val, int slave_id, int addr, int count) override;
-   bool f4(std::string &name, uint16_t *val) override;
-
-   bool f5(uint8_t val, int slave_id, int adr) override;
-   bool f5(std::string &name, uint8_t val) override;
-
-   bool f6(uint8_t *vals, int slave_id, int adr) override;
-   bool f6(std::string &name, uint8_t *vals, int count) override;
-
-   bool f15(uint16_t val, int slave_id, int adr) override;
-   bool f15(std::string &name, uint16_t val) override;
-
-   bool f16(uint16_t *vals, int slave_id, int adr, int count) override;
-   bool f16(std::string &name, uint16_t *vals, int count) override;
+   bool runRequest(void* vals, const int slave_id, const int func, const int addr, const int count = 1);
+   bool runRequest(void* vals, const std::string &name, const int count = 1);
 
    class Data : public ModbusData {
       public:

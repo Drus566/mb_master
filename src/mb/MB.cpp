@@ -53,60 +53,17 @@ void MB::startDebug() { m_action_manager->setDebug(true); }
 
 void MB::stopDebug() { m_action_manager->setDebug(false); }
 
-bool MB::f1(uint8_t *val, int slave_id, int addr, int count) {
-	return true;
-}
-bool MB::f1(std::string &name, uint8_t *val) {
-	return true;
+bool MB::runRequest(void *vals, const int slave_id, const int func, const int addr, const int count) {
+	void *values = static_cast<void *>(vals);
+	return m_action_manager->handleDirectRequest(values, slave_id, func, addr, count);
 }
 
-bool MB::f2(uint8_t *val, int slave_id, int addr, int count) {
-	return true;
-}
-bool MB::f2(std::string &name, uint8_t *val) {
-	return true;
-}
-
-bool MB::f3(uint16_t *val, int slave_id, int addr, int count) {
-	return true;
-}
-bool MB::f3(std::string &name, uint16_t *val) {
-	return true;
-}
-
-bool MB::f4(uint16_t *val, int slave_id, int addr, int count) {
-	return true;
-}
-bool MB::f4(std::string &name, uint16_t *val) {
-	return true;
-}
-
-bool MB::f5(uint8_t val, int slave_id, int adr) {
-	return true;
-}
-bool MB::f5(std::string &name, uint8_t val) {
-	return true;
-}
-
-bool MB::f6(uint8_t *vals, int slave_id, int adr) {
-	return true;
-}
-bool MB::f6(std::string &name, uint8_t *vals, int count) {
-	return true;
-}
-
-bool MB::f15(uint16_t val, int slave_id, int adr) {
-	return true;
-}
-bool MB::f15(std::string &name, uint16_t val) {
-	return true;
-}
-
-bool MB::f16(uint16_t *vals, int slave_id, int adr, int count) {
-	return true;
-}
-bool MB::f16(std::string &name, uint16_t *vals, int count) {
-	return true;
+bool MB::runRequest(void *vals, const std::string &name, const int count) {
+	bool result = false;
+	void *values = static_cast<void *>(vals);
+	Register *reg = m_data_manager->findReadRegOnlyByName(name);
+	if (reg) result = m_action_manager->handleDirectRequest(values, reg->slave_id, reg->function, reg->address, count);
+	return result;
 }
 
 IMB::ModbusData* MB::getDataOnlyByName(const std::string& name) { 
