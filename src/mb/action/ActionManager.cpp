@@ -89,11 +89,13 @@ ActionManager::ActionManager(Config* config,
 	}
 
 	m_modbus_master = new ModbusMaster(m_modbus_connection);
+	m_direct_req_manager = new DirectRequestManager();
 } 
 
 ActionManager::~ActionManager() {
 	stop();
 	if (m_modbus_master) delete m_modbus_master;
+	if (m_direct_req_manager) delete m_direct_req_manager;
 }
 
 bool ActionManager::start() {
@@ -131,7 +133,8 @@ bool ActionManager::start() {
 	m_thread = std::thread(&ActionManager::payload, 
 									this, 
 									m_data_manager, 
-									m_mem_manager);
+									m_mem_manager,
+									m_direct_req_manager);
 	m_thread.detach();
 	
 	return true;
@@ -162,54 +165,18 @@ bool ActionManager::handleDirectRequest(void* vals, const int slave_id, const in
 	req = m_direct_req_manager->addDirectRequest(vals, slave_id, func, addr, count);
 
 	if (req) {
-		while (!req->finish.load()) { std::this_thread::sleep_for(std::chrono::milliseconds(1)); }
+		while (!req->isFinish()) { std::this_thread::sleep_for(std::chrono::microseconds(10)); }
 		result = true;
 	}
 	return result;
 }
 
-// bool ActionManager::f1(uint8_t *val, int id, int addr, int count) {
-// 	// m_pool_out_requests;
-// 	// Queue<OutRequest> m_queue_out_requests;
-
-// 	while (!out_req->finish) {
-// 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-// 	}
-
-// //     // Получаем объекты из пула
-// //     Particle* p1 = particlePool.acquire();
-// //     Particle* p2 = particlePool.acquire();
-
-// //     if (p1) p1->init(10, 20);
-// //     if (p2) p2->init(30, 40);
-
-// //     particlePool.debug();
-
-// //     if (p1) p1->display();
-// //     if (p2) p2->display();
-
-// //     // Возвращаем объекты в пул
-// //     particlePool.release(p1);
-// //     particlePool.release(p2);
-
-// //     particlePool.debug();
-// 	return true;
-// }
-// bool ActionManager::f1(std::string &name, uint8_t *val) override;
-// bool ActionManager::f2(uint8_t *val, int slave_id, int addr, int count) override;
-// bool ActionManager::f2(std::string &name, uint8_t *val) override;
-// bool ActionManager::f3(uint16_t *val, int slave_id, int addr, int count) override;
-// bool ActionManager::f3(std::string &name, uint16_t *val) override;
-// bool ActionManager::f4(uint16_t *val, int slave_id, int addr, int count) override;
-// bool ActionManager::f4(std::string &name, uint16_t *val) override;
-// bool ActionManager::f5(uint8_t val, int slave_id, int adr) override;
-// bool ActionManager::f5(std::string &name, uint8_t val) override;
-
-void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager) {
+void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager, DirectRequestManager* direct_req_manager) {
 	m_run.store(true);
 
 	const std::vector<Request>& read_requests = data_manager->getReadRequests();
 	const int max_count_read_regs = data_manager->getMaxCountReadRegs();
+	Queue<DirectRequest*>* direct_req_queue = direct_req_manager->getQueue();
 	
 	uint16_t buffer[max_count_read_regs];
 	uint8_t* u8_ptr = reinterpret_cast<uint8_t*>(buffer);
@@ -220,6 +187,8 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager) 
 
 	while (m_run.load()) {
 		for (const auto& request : read_requests) {
+			response = false;
+
 			switch (request.function) {
 				case FuncNumber::READ_COIL:
 					response = m_modbus_master->readBits(request.slave_id, request.address, request.quantity, u8_ptr);
@@ -259,29 +228,64 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager) 
 			std::this_thread::sleep_for(m_time_between_requests);
 			
 			// TODO: check out requests
-			// while (!m_queue_out_requests.empty()) {
-			// 	if (m_queue_out_requests.pop(r)) {
-					switch (request.function) {
-						case FuncNumber::WRITE_SINGLE_COIL:
+			while (!direct_req_queue->empty()) {
+				response = false;
+
+				if (direct_req_queue->pop(r)) {
+					switch (r->function) {
+						case FuncNumber::READ_COIL:
 							response = m_modbus_master->readBits(r->slave_id, r->address, r->quantity, r->u8_out_mem);
 							break;
 
-						case FuncNumber::WRITE_MULTIPLE_COILS:
+						case FuncNumber::READ_INPUT_COIL:
 							response = m_modbus_master->readInputBits(r->slave_id, r->address, r->quantity, r->u8_out_mem);
 							break;
 
-						case FuncNumber::WRITE_SINGLE_WORD:
+						case FuncNumber::READ_REGS:
 							response = m_modbus_master->readRegisters(r->slave_id, r->address, r->quantity, r->u16_out_mem);
 							break;
 
-						case FuncNumber::WRITE_MULTIPLE_WORDS:
+						case FuncNumber::READ_INPUT_REGS:
 							response = m_modbus_master->readInputRegisters(r->slave_id, r->address, r->quantity, r->u16_out_mem);
+							break;
+
+						case FuncNumber::WRITE_SINGLE_COIL:
+							response = m_modbus_master->writeBit(r->slave_id, r->address, *(r->u8_out_mem));
+							break;
+
+						case FuncNumber::WRITE_MULTIPLE_COILS:
+							response = m_modbus_master->writeBits(r->slave_id, r->address, r->quantity, r->u8_out_mem);
+							break;
+
+						case FuncNumber::WRITE_SINGLE_WORD:
+							response = m_modbus_master->writeRegister(r->slave_id, r->address, *(r->u16_out_mem));
+							break;
+
+						case FuncNumber::WRITE_MULTIPLE_WORDS:
+							response = m_modbus_master->writeRegisters(r->slave_id, r->address, r->quantity, r->u16_out_mem);
 							break;
 					}
 				}
+				r->setStatus(response);
+				r->setFinish(true);
+
+				if (!response) { 
+					m_modbus_master->flush();
+					++error;
+				} 
+				else { 
+					error = 0;
+					m_connect.store(true);
+				}
+
+				if (error > m_max_count_errors) { 
+					error = m_max_count_errors;
+					m_connect.store(false);
+				}
+
 				std::this_thread::sleep_for(m_time_between_requests);
-		// 	}
-		// }
+			}
+		}
 		std::this_thread::sleep_for(m_poll_delay);
 	}
 }

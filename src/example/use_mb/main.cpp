@@ -35,6 +35,14 @@ int main(void) {
 	mb::IMB::ModbusData* d12 = mb->getData(314,3);
 	mb::IMB::ModbusData* d13 = mb->getData(316,3);
 
+	uint8_t data[2];
+	void* result_ptr = static_cast<void*>(data);
+	mb->runRequest(result_ptr, 1, 1, 300, 2);
+	std::cout << "DIRECT REQUESTS" << std::endl;
+	std::cout << static_cast<int>(data[0]) << std::endl;
+	std::cout << static_cast<int>(data[1]) << std::endl;
+	std::cout << "***************" << std::endl;
+
 	// mb->writeRaw(uint16_t* vals, int slave_id, int adr, int func, int count);
 
 	// bool mb->readF1(uint8_t* val, int slave_id, int addr, int count);

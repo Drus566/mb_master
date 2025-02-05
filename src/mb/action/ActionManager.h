@@ -59,7 +59,7 @@ private:
 	
 	int m_max_count_errors;
 
-	void payload(DataManager* data_manager, MemManager* mem_manager);
+	void payload(DataManager* data_manager, MemManager* mem_manager, DirectRequestManager* m_direct_req_manager);
 };
 
 } // action

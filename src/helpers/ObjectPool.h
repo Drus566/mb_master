@@ -11,14 +11,24 @@ namespace helpers {
 template <typename T>
 class ObjectPool {
 public:
-    ObjectPool(size_t pool_size) { m_pool.resize(pool_size); }
+    ObjectPool(size_t pool_size) { 
+        m_pool.resize(pool_size);
+        for (auto& item : m_pool) {
+            item.object = new T();
+        } 
+    }
+    ~ObjectPool() {
+        for (auto& item : m_pool) {
+            if (item.object) delete item.object;
+        }
+    }
 
     T* acquire() {
         std::lock_guard<std::mutex> lock(m_mutex);
         for (auto& item : m_pool) {
             if (!item.active) {
                 item.active = true;
-                return &item.object;
+                return item.object;
             }
         }
         return nullptr;
@@ -36,7 +46,7 @@ public:
 
 private:
     struct PoolItem {
-        T object;
+        T* object;
         bool active = false;
     };
 

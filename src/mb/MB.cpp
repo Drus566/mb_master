@@ -54,15 +54,14 @@ void MB::startDebug() { m_action_manager->setDebug(true); }
 void MB::stopDebug() { m_action_manager->setDebug(false); }
 
 bool MB::runRequest(void *vals, const int slave_id, const int func, const int addr, const int count) {
-	void *values = static_cast<void *>(vals);
-	return m_action_manager->handleDirectRequest(values, slave_id, func, addr, count);
+	return m_action_manager->handleDirectRequest(vals, slave_id, func, addr, count);
 }
 
 bool MB::runRequest(void *vals, const std::string &name, const int count) {
 	bool result = false;
-	void *values = static_cast<void *>(vals);
 	Register *reg = m_data_manager->findReadRegOnlyByName(name);
-	if (reg) result = m_action_manager->handleDirectRequest(values, reg->slave_id, reg->function, reg->address, count);
+	if (reg)
+		result = m_action_manager->handleDirectRequest(vals, reg->slave_id, reg->function, reg->address, count);
 	return result;
 }
 

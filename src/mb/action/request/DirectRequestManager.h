@@ -13,12 +13,14 @@ using namespace mb::helpers;
 class DirectRequestManager {
 public:
 	DirectRequestManager();
+	~DirectRequestManager();
 
 	DirectRequest* addDirectRequest(void* vals, const int slave_id, const int func, const int addr, const int count);
+	Queue<DirectRequest*>* getQueue();
 
 private:
-	ObjectPool<DirectRequest> m_pool;
-	Queue<std::shared_ptr<DirectRequest>> m_queue;
+	ObjectPool<DirectRequest>* m_pool;
+	Queue<DirectRequest*>* m_queue;
 };
 
 } // mb

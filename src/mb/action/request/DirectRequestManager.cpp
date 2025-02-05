@@ -5,12 +5,20 @@
 namespace mb {
 namespace action {
 
-DirectRequestManager::DirectRequestManager() : m_pool(POOL_OUT_REQUESTS_SIZE),
-									 						  m_queue() {}
+DirectRequestManager::DirectRequestManager() {
+	m_pool = new ObjectPool<DirectRequest>(POOL_OUT_REQUESTS_SIZE);
+	m_queue = new Queue<DirectRequest*>;
+}
+
+DirectRequestManager::~DirectRequestManager() {
+	if (m_pool) delete m_pool;
+	if (m_queue) delete m_queue;
+}
 
 DirectRequest* DirectRequestManager::addDirectRequest(void* vals, const int slave_id, const int func, const int addr, const int count) {
 	DirectRequest* req = nullptr;
-	req = m_pool.acquire();
+	req = m_pool->acquire();
+
 	uint8_t* u8_vals = nullptr;
 	uint16_t* u16_vals = nullptr;
 
@@ -21,15 +29,20 @@ DirectRequest* DirectRequestManager::addDirectRequest(void* vals, const int slav
 		req->address = addr;
 		req->slave_id = slave_id;
 		req->quantity = count;
-		req->function = FuncNumber::READ_COIL;
+		req->function = static_cast<FuncNumber>(func);
 		req->u8_out_mem = u8_vals;
 		req->u16_out_mem = u16_vals;
-		// req->setFinish(false);
-		if (!m_queue.push(req)) req = nullptr;
+		
+		req->setFinish(false);
+		req->setStatus(false);
+		
+		if (!m_queue->push(req)) req = nullptr;
 	}
 
 	return req;
 }
+
+Queue<DirectRequest*>* DirectRequestManager::getQueue() { return m_queue; }
 
 // DirectRequest DirectRequestManager::*addDirectRequest(const int func, uint8_t *const vals, const std::string &name, const int slave_id, const int addr, const int count) {
 // 	DirectRequest *req = nullptr;
