@@ -42,9 +42,9 @@ int main(void) {
 	// mb::IMB::ModbusData* d12 = mb->getData(314,3);
 	// mb::IMB::ModbusData* d13 = mb->getData(316,3);
 
-	uint16_t data[2];
+	uint8_t data[2];
 	void *result_ptr = static_cast<void *>(data);
-	uint16_t write_data[] = {555, 333};
+	uint8_t write_data[] = {0, 0};
 	void *write_ptr = static_cast<void *>(data);
 
 	// mb->writeRaw(uint16_t* vals, int slave_id, int adr, int func, int count);
@@ -95,24 +95,24 @@ int main(void) {
 
 		// std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-		write_data[0] = 555;
-		write_data[1] = 333;
-		mb->runRequest(write_data, "ww1", 2);
+		write_data[0] = 0;
+		write_data[1] = 0;
+		mb->runRequest(write_data, "wr1", 2);
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-		if (mb->runRequest(result_ptr, 1, 3, 400, 2)) {
+		if (mb->runRequest(result_ptr, 1, 1, 800, 2)) {
 			std::cout << static_cast<int>(data[0]) << " " << static_cast<int>(data[1]) << std::endl;
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-		write_data[0] = 11;
-		write_data[1] = 12;
-		mb->runRequest(write_data, "ww1", 2);
+		write_data[0] = 1;
+		write_data[1] = 1;
+		mb->runRequest(write_data, "wr1", 2);
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-		if (mb->runRequest(result_ptr, "rw1", 2)) {
+		if (mb->runRequest(result_ptr, "rwr1", 2)) {
 			std::cout << static_cast<int>(data[0]) << " " << static_cast<int>(data[1]) << std::endl;
 		}
 
