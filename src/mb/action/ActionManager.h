@@ -58,6 +58,7 @@ private:
 	std::chrono::milliseconds m_poll_delay;
 	
 	int m_max_count_errors;
+	int m_direct_request_priority;
 
 	void payload(DataManager* data_manager, MemManager* mem_manager, DirectRequestManager* m_direct_req_manager);
 };

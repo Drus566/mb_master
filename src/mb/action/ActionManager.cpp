@@ -16,6 +16,8 @@
 #define DEFAULT_IP "127.0.0.1"
 #define DEFAULT_PORT 502
 
+#define DEFAULT_DIRECT_REQUEST_PRIORITY 0 // all request in queue handles
+
 #include "ActionManager.h"
 
 #include "ModbusMaster.h"
@@ -32,8 +34,10 @@ ActionManager::ActionManager(Config* config,
 							 MemManager* mem_manager) : m_config(config), 
 									  					m_data_manager(data_manager),
 														m_mem_manager(mem_manager),
-							   		  					m_run(false),
+							   		  				m_run(false),
 														m_connect(false) {
+	m_direct_request_priority = m_config->directRequestPriority();
+
 	std::chrono::milliseconds response_timeout = m_config->responseTimeout();
 	std::chrono::milliseconds byte_timeout = m_config->byteTimeout();
 
@@ -119,8 +123,8 @@ bool ActionManager::start() {
 	}
 
 	if (m_config->log()) {
-		m_modbus_master->setLog(TRUE);
 		Logger::Instance()->log(LogLevel::INFO, "Modbus master set log true");
+		m_modbus_master->setLog(TRUE);
 	}
 
 	if (m_config->debugMode()) {
@@ -162,12 +166,14 @@ void ActionManager::setDebug(int flag) { m_modbus_master->setDebug(flag); }
 bool ActionManager::handleDirectRequest(void* vals, const int slave_id, const int func, const int addr, const int count) {
 	bool result = false;
 	DirectRequest* req = nullptr;
-	req = m_direct_req_manager->addDirectRequest(vals, slave_id, func, addr, count);
+	req = m_direct_req_manager->add(vals, slave_id, func, addr, count);
 
 	if (req) {
-		while (!req->isFinish()) { std::this_thread::sleep_for(std::chrono::microseconds(10)); }
-		result = true;
+		while (!req->isFinish()) { std::this_thread::sleep_for(std::chrono::microseconds(200)); }
+		m_direct_req_manager->release(req);
+		result = req->isSuccess();
 	}
+
 	return result;
 }
 
@@ -185,7 +191,11 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager, 
 	bool response;
 	DirectRequest* r;
 
+	int counter_direct_request = 0;
+
 	while (m_run.load()) {
+		std::this_thread::sleep_for(m_poll_delay);
+
 		for (const auto& request : read_requests) {
 			response = false;
 
@@ -227,8 +237,18 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager, 
 
 			std::this_thread::sleep_for(m_time_between_requests);
 			
-			// TODO: check out requests
+			// Check out requests
+			if (m_direct_request_priority < 0) continue;
+
 			while (!direct_req_queue->empty()) {
+				if (m_direct_request_priority != 0) {
+					if (counter_direct_request < m_direct_request_priority) ++counter_direct_request;
+					else {
+						counter_direct_request = 0;
+						break;
+					}
+				}
+
 				response = false;
 
 				if (direct_req_queue->pop(r)) {
@@ -266,6 +286,7 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager, 
 							break;
 					}
 				}
+
 				r->setStatus(response);
 				r->setFinish(true);
 
@@ -286,7 +307,6 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager, 
 				std::this_thread::sleep_for(m_time_between_requests);
 			}
 		}
-		std::this_thread::sleep_for(m_poll_delay);
 	}
 }
 

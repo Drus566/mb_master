@@ -37,7 +37,7 @@ public:
     void release(T* obj) {
         std::lock_guard<std::mutex> lock(m_mutex);
         for (auto& item : m_pool) {
-            if (&item.object == obj) {
+            if (item.object == obj) {
                 item.active = false;
                 break;
             }

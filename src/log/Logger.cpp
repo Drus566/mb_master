@@ -28,9 +28,21 @@ Logger* Logger::Instance() {
     return m_instance;
 }
 
+Logger* Logger::Instance(std::string& filename) {
+    if (!m_instance) m_instance = new Logger(filename);
+    else { m_instance->setLogFile(filename); }
+    return m_instance;
+}
+
 Logger::Logger() {
     m_log_file.open(MODBUS_LOG_DEFAULT_FILENAME, std::ios::app);
     if (!m_log_file.is_open()) std::cerr << "Error open log file: " << MODBUS_LOG_DEFAULT_FILENAME << std::endl;
+    m_active = false;
+}
+
+Logger::Logger(std::string& filename) {
+    m_log_file.open(filename, std::ios::app);
+    if (!m_log_file.is_open()) std::cerr << "Error open log file: " << filename << std::endl;
     m_active = false;
 }
 
@@ -45,12 +57,19 @@ bool Logger::setActive(bool mode) {
 
 bool Logger::setLogFile(std::string& filename) {
     std::lock_guard<std::mutex> lock(m_mtx);
+    bool prev_active = m_active;
 
-    if (m_instance == nullptr) m_instance = new Logger();
-    else return false;
-    if (m_log_file.is_open()) m_log_file.close(); 
+    if (m_log_file.is_open()) {
+        m_active = false; 
+        m_log_file.close();
+    } 
     m_log_file.open(filename, std::ios::app);
-    if (!m_log_file.is_open()) std::cerr << "Error open log file: " << filename << std::endl;
+    if (!m_log_file.is_open()) {
+        std::cerr << "Error open log file: " << filename << std::endl;
+        return false;
+    }
+    m_active = prev_active;
+    return true;
 }
 
 void Logger::rawLog(const std::string &message) {

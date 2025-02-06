@@ -25,13 +25,21 @@ public:
     class ModbusData;
 
     virtual ~IMB() {}
-    static std::unique_ptr<IMB> create(const std::string& config_path);
-	virtual bool start() = 0;
-    virtual bool isConnect() = 0;
     
+    static std::unique_ptr<IMB> create(const std::string& config_path);
+
+    virtual bool start() = 0;
+
+    virtual bool isConnect() = 0;
+
+    virtual void startLog(char* filename) = 0;
+    virtual void startLog(std::string& filename) = 0;
     virtual void startLog() = 0;
+
     virtual void stopLog() = 0;
+
     virtual void startDebug() = 0;
+
     virtual void stopDebug() = 0;
 
     virtual ModbusData* getDataOnlyByName(const std::string& name) = 0;
@@ -49,8 +57,9 @@ public:
  
     // virtual Data getInputRegisterData(const std::string& name, const int slave_id = MB_DEFAULT_SLAVE) = 0; 
     // virtual Data getInputRegisterData(const int addr, const int slave_id = MB_DEFAULT_SLAVE) = 0;
-    virtual bool runRequest(void* vals, const int slave_id, const int func, const int addr, const int count) = 0;
-    virtual bool runRequest(void* vals, const std::string &name, const int count) = 0;
+
+    virtual bool runRequest(void* vals, const int slave_id, const int func, const int addr, int count = 1) = 0;
+    virtual bool runRequest(void* vals, const std::string &name, int count = 1) = 0;
 
     class ModbusData {
         public:

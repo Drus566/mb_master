@@ -8,7 +8,7 @@ int main(void) {
 	std::string path_config = "example.ini";
 	std::unique_ptr<mb::IMB> mb = mb::IMB::create(path_config);
 
-	char filename[] = "GGWP1";
+	char filename[] = "GGWP";
 	mb->startLog(filename);
 	bool result = mb->start();
 	if (!result) { 
@@ -20,9 +20,9 @@ int main(void) {
 	// char filename[] = "GGWP";
 	// mb->startLog(filename);
 
-	// mb::IMB::ModbusData* d = mb->getData(300,1);
-	// mb::IMB::ModbusData* d1 = mb->getData(301,1);
-	// mb::IMB::ModbusData* d2 = mb->getData(302,1);
+	mb::IMB::ModbusData* d = mb->getData(300,1);
+	mb::IMB::ModbusData* d1 = mb->getData(301,1);
+	mb::IMB::ModbusData* d2 = mb->getData(302,1);
 	// mb::IMB::IData* d3 = mb->getData(303,1);
 
 	// worked
@@ -30,22 +30,20 @@ int main(void) {
 	// mb::IMB::IData* d5 = mb->getDataOnlyByName("r2");
 	// mb::IMB::IData* d6 = mb->getDataOnlyByName("r3");
 
-	// mb::IMB::ModbusData* d4 = mb->getData(300,3);
-	// mb::IMB::ModbusData* d5 = mb->getData(301,3);
-	// mb::IMB::ModbusData* d6 = mb->getData(302,3);
-	// mb::IMB::ModbusData* d7 = mb->getData(304,3);
-	// mb::IMB::ModbusData* d8 = mb->getData(306,3);
-	// mb::IMB::ModbusData* d9 = mb->getData(308,3);
+	mb::IMB::ModbusData* d4 = mb->getData(300,3);
+	mb::IMB::ModbusData* d5 = mb->getData(301,3);
+	mb::IMB::ModbusData* d6 = mb->getData(302,3);
+	mb::IMB::ModbusData* d7 = mb->getData(304,3);
+	mb::IMB::ModbusData* d8 = mb->getData(306,3);
+	mb::IMB::ModbusData* d9 = mb->getData(308,3);
 
-	// mb::IMB::ModbusData* d10 = mb->getData(310,3);
-	// mb::IMB::ModbusData* d11 = mb->getData(312,3);
-	// mb::IMB::ModbusData* d12 = mb->getData(314,3);
-	// mb::IMB::ModbusData* d13 = mb->getData(316,3);
+	mb::IMB::ModbusData* d10 = mb->getData(310,3);
+	mb::IMB::ModbusData* d11 = mb->getData(312,3);
+	mb::IMB::ModbusData* d12 = mb->getData(314,3);
+	mb::IMB::ModbusData* d13 = mb->getData(316,3);
 
 	uint8_t data[2];
 	void *result_ptr = static_cast<void *>(data);
-	uint8_t write_data[] = {0, 0};
-	void *write_ptr = static_cast<void *>(data);
 
 	// mb->writeRaw(uint16_t* vals, int slave_id, int adr, int func, int count);
 
@@ -87,36 +85,17 @@ int main(void) {
 	// if (g == nullptr) std::cout << "GGWP" << std::endl;
 	// g->getBit();
 
-
 	while(true) {
-		// if (mb->runRequest(result_ptr, 1, 1, 802, 2)) {
-		// 	std::cout << static_cast<int>(data[0]) << " " << static_cast<int>(data[1]) << std::endl;
-		// }
-
-		// std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
-		write_data[0] = 0;
-		write_data[1] = 0;
-		mb->runRequest(write_data, "wr1", 2);
-
+		if (mb->runRequest(result_ptr, 1, 1, 802, 2)) {
+			std::cout << static_cast<int>(data[0]) << " " << static_cast<int>(data[1]) << std::endl;
+		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
 		if (mb->runRequest(result_ptr, 1, 1, 800, 2)) {
 			std::cout << static_cast<int>(data[0]) << " " << static_cast<int>(data[1]) << std::endl;
 		}
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-		write_data[0] = 1;
-		write_data[1] = 1;
-		mb->runRequest(write_data, "wr1", 2);
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
-		if (mb->runRequest(result_ptr, "rwr1", 2)) {
-			std::cout << static_cast<int>(data[0]) << " " << static_cast<int>(data[1]) << std::endl;
-		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		
 
 		// std::cout << "**** DATA ****" << std::endl;
 		// std::cout << "Func 1:" << std::endl;

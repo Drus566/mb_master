@@ -30,6 +30,8 @@ public:
     
     bool start();
 
+    Register* findRegOnlyByName(const std::string& name);
+    Register* findDescribeRegOnlyByName(const std::string& name);
     Register* findReadRegOnlyByName(const std::string& name);
     Register* findReadReg(const std::string& name, const int func, const int slave_id);
     Register* findReadReg(const int addr, const int func, const int slave_id);

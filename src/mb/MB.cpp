@@ -21,7 +21,6 @@ MB::~MB() {
 }
 
 bool MB::start() {
-	if (m_config->log()) Logger::Instance()->setActive(true);
 	Logger::Instance()->log(LogLevel::INFO, "============== Start MB ==============");
 
 	if (m_start) {
@@ -37,31 +36,53 @@ bool MB::start() {
 
 	Logger::Instance()->log(LogLevel::INFO, "Modbus master success initialized");
 
-	Logger::Instance()->setActive(false);
-
 	m_start = true;
 	return true;
 }
 
 bool MB::isConnect() { return m_action_manager->isConnect(); }
 
-void MB::startLog() { Logger::Instance()->setActive(true); }
+void MB::startLog(char* filename) {
+	std::string file(filename);
+	m_action_manager->setLog(true);
+	Logger::Instance(file)->setActive(true);
+}
 
-void MB::stopLog() { Logger::Instance()->setActive(false); }
+void MB::startLog(std::string& filename) {
+	m_action_manager->setLog(true);
+	Logger::Instance(filename)->setActive(true);
+}
+
+void MB::startLog() {
+	m_action_manager->setLog(true);
+	Logger::Instance()->setActive(true);
+}
+
+
+void MB::stopLog() {
+	m_action_manager->setLog(false);
+	Logger::Instance()->setActive(false); 
+}
 
 void MB::startDebug() { m_action_manager->setDebug(true); }
 
 void MB::stopDebug() { m_action_manager->setDebug(false); }
 
-bool MB::runRequest(void *vals, const int slave_id, const int func, const int addr, const int count) {
+bool MB::runRequest(void *vals, const int slave_id, const int func, const int addr, int count = 1) {
+	if (count < 1) return false;
 	return m_action_manager->handleDirectRequest(vals, slave_id, func, addr, count);
 }
 
-bool MB::runRequest(void *vals, const std::string &name, const int count) {
+bool MB::runRequest(void *vals, const std::string &name, int count = 1) {
+	if (count < 1) return false;
+
 	bool result = false;
-	Register *reg = m_data_manager->findReadRegOnlyByName(name);
-	if (reg)
+	Register *reg = m_data_manager->findRegOnlyByName(name);
+
+	if (reg) {
+		if (!isCoilFunc(reg->function) && isDwordDataType(reg->reg_info.data_type) && count == 1) count = 2;
 		result = m_action_manager->handleDirectRequest(vals, reg->slave_id, reg->function, reg->address, count);
+	}
 	return result;
 }
 

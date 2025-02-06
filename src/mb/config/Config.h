@@ -52,6 +52,7 @@ class Config {
     bool printRegs() const { return getBool(SETTINGS_SECTION, "PrintRegs"); }
     bool printRequests() const { return getBool(SETTINGS_SECTION, "PrintRequests"); }
     bool printRanges() const { return getBool(SETTINGS_SECTION, "PrintRanges"); }
+    int directRequestPriority() const { return get<int>(SETTINGS_SECTION, "DirectRequestPriority"); }
 
     SectionsMap& getRegs(SectionsMap& map) {
       std::vector<std::string> sections = m_config.sections();
@@ -63,7 +64,10 @@ class Config {
           || startsWith(s, DISCRETE_SECTION)          || startsWith(s, F2_SECTION)
           || startsWith(s, INPUT_REGS_SECTION)        || startsWith(s, F4_SECTION)
           || startsWith(s, HOLDING_REGS_SECTION)      || startsWith(s, F3_SECTION)
-          || startsWith(s, WRITE_WORD_SECTION)        || startsWith(s, WRITE_COIL_SECTION)) {
+          || startsWith(s, WRITE_WORD_SECTION)        || startsWith(s, F6_SECTION)
+          || startsWith(s, WRITE_WORDS_SECTION)       || startsWith(s, F16_SECTION)
+          || startsWith(s, WRITE_COIL_SECTION)        || startsWith(s, F5_SECTION)
+          || startsWith(s, WRITE_COILS_SECTION)       || startsWith(s, F15_SECTION)) {
           std::vector<std::string> params = m_config[s];
           params_map.clear();
           for (auto& p : params) { params_map[p] = m_config.get(s, p); }

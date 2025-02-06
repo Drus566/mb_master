@@ -28,6 +28,7 @@ std::string logLevelToString(LogLevel level);
 class Logger {
 public:
     static Logger* Instance();
+    static Logger* Instance(std::string& filename);
     bool setLogFile(std::string& filename);
     void rawLog(const std::string &message);
     void log(LogLevel level, const std::string& message);
@@ -37,6 +38,8 @@ public:
 
 private:
     Logger();
+    Logger(std::string& filename);
+
     ~Logger();
     static Logger* m_instance;
 

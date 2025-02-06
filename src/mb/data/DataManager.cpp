@@ -258,6 +258,28 @@ Register* DataManager::findReadRegOnlyByName(const std::string& name) {
     return result;
 }
 
+Register* DataManager::findDescribeRegOnlyByName(const std::string& name) {
+    Register* result = nullptr;
+    
+    std::forward_list<Register>& read_regs = m_reg_manager->getDescribeRegs();
+    for (auto& read_reg : read_regs) {
+        if (read_reg.name == name) {
+            result = &read_reg;
+            break;
+        }
+    }
+    return result;
+}
+
+
+Register* DataManager::findRegOnlyByName(const std::string& name) {
+    Register* result = nullptr;    
+    result = findReadRegOnlyByName(name);
+    if (!result) result = findDescribeRegOnlyByName(name);
+    return result;
+}
+
+
 Register* DataManager::findReadReg(const std::string& name, const int func, const int slave_id) {
     Register* result = nullptr;
     

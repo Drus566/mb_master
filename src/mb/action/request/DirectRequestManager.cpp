@@ -15,7 +15,9 @@ DirectRequestManager::~DirectRequestManager() {
 	if (m_queue) delete m_queue;
 }
 
-DirectRequest* DirectRequestManager::addDirectRequest(void* vals, const int slave_id, const int func, const int addr, const int count) {
+void DirectRequestManager::release(DirectRequest* req) { m_pool->release(req); }
+
+DirectRequest* DirectRequestManager::add(void* vals, const int slave_id, const int func, const int addr, const int count) {
 	DirectRequest* req = nullptr;
 	req = m_pool->acquire();
 
@@ -36,7 +38,10 @@ DirectRequest* DirectRequestManager::addDirectRequest(void* vals, const int slav
 		req->setFinish(false);
 		req->setStatus(false);
 		
-		if (!m_queue->push(req)) req = nullptr;
+		if (!m_queue->push(req)) {
+			m_pool->release(req);
+			req = nullptr;
+		} 
 	}
 
 	return req;

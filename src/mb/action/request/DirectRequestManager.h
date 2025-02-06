@@ -15,7 +15,8 @@ public:
 	DirectRequestManager();
 	~DirectRequestManager();
 
-	DirectRequest* addDirectRequest(void* vals, const int slave_id, const int func, const int addr, const int count);
+	DirectRequest* add(void* vals, const int slave_id, const int func, const int addr, const int count);
+	void release(DirectRequest* req);
 	Queue<DirectRequest*>* getQueue();
 
 private:

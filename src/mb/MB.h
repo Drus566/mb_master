@@ -20,9 +20,12 @@ public:
 	MB(const std::string& path_config);
 	~MB();
 
-	bool start() override;
+   bool start() override;
+
    bool isConnect() override;
 
+   void startLog(char* filename) override;
+   void startLog(std::string& filename) override;
    void startLog() override;
    void stopLog() override;
    void startDebug() override;
@@ -44,8 +47,8 @@ public:
    // Data getInputRegisterData(const std::string& name, const int slave_id = MB_DEFAULT_SLAVE) override; 
    // Data getInputRegisterData(const int addr, const int slave_id = MB_DEFAULT_SLAVE) override;
 
-   bool runRequest(void* vals, const int slave_id, const int func, const int addr, const int count = 1);
-   bool runRequest(void* vals, const std::string &name, const int count = 1);
+   bool runRequest(void* vals, const int slave_id, const int func, const int addr, int count);
+   bool runRequest(void* vals, const std::string &name, int count);
 
    class Data : public ModbusData {
       public:
