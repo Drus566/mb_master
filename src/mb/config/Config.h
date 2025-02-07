@@ -47,6 +47,7 @@ class Config {
 
     bool log() const { return getBool(SETTINGS_SECTION, "Log"); }
     std::string logFile() const { return getString(SETTINGS_SECTION, "LogFile"); }
+    std::string logMode() const { return getString(SETTINGS_SECTION, "LogMode"); }
     bool debugMode() const { return getBool(SETTINGS_SECTION, "DebugMode"); }
     bool printSettings() const { return getBool(SETTINGS_SECTION, "PrintSettings"); }
     bool printRegs() const { return getBool(SETTINGS_SECTION, "PrintRegs"); }

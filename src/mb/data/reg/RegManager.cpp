@@ -85,22 +85,15 @@ std::forward_list<Register>& RegManager::getReadRegs() { return m_regs; }
 std::forward_list<Register> &RegManager::getDescribeRegs() { return m_describe_regs; }
 
 void RegManager::printInfo() {
-	std::cout << "** REGISTERS [name, slave_id, func, addr, data_type, order, precision] **" << std::endl;
 	Logger::Instance()->rawLog("** REGISTERS [name, slave_id, func, addr, data_type, order, precision] **");
-
-	std::cout << "* READ REGISTERS" << std::endl;
-
+	Logger::Instance()->rawLog(" READ REGISTERS ");
 	for (const Register& r : m_regs) {
 		printRegInfo(r);
 	}
-
-	std::cout << "* DESCRIBE REGISTERS (do not fall into the request pool)" << std::endl;
-
+	Logger::Instance()->rawLog(" DESCRIBE REGISTERS ");
 	for (const Register& r : m_describe_regs) {
 		printRegInfo(r);
 	}
-	
-	std::cout << "*************************************************************************" << std::endl;
 	Logger::Instance()->rawLog("*************************************************************************");
 }
 
@@ -115,9 +108,6 @@ void RegManager::printRegInfo(const Register& r) {
 		if (r.isFloat()) oss << "," << static_cast<int>(r.reg_info.precision);
 	}
 	oss << "]";
-
-	std::cout << oss.str() << std::endl;
-
 	Logger::Instance()->rawLog("%s", oss.str().c_str());
 }
 

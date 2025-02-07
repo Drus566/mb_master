@@ -45,16 +45,16 @@ bool DataManager::start() {
 
     SectionsMap map;
     map = m_config->getAreas(map);
-    if (map.empty()) {
-        Logger::Instance()->log(LogLevel::ERROR, "Section map is empty");
-        return false;
-    }
+    // if (map.empty()) {
+        // Logger::Instance()->log(LogLevel::ERROR, "Section map is empty");
+        // return false;
+    // }
 
-    result = parseRanges(slave_id, map);
-    if (!result) {
-        Logger::Instance()->log(LogLevel::ERROR, "Uncorrect parse ranges");
-        return false;
-    }
+    if (!map.empty()) parseRanges(slave_id, map);
+    // if (!result) {
+    //     Logger::Instance()->log(LogLevel::ERROR, "Uncorrect parse ranges");
+    //     return false;
+    // }
 
     if (m_config->printRanges()) m_range_manager->printInfo();
 
@@ -73,7 +73,7 @@ bool DataManager::start() {
     if (m_config->printRegs()) m_reg_manager->printInfo();
     if (m_config->printRequests()) m_request_manager->printInfo();
     
-    return result;
+    return true;
 }
 
 bool DataManager::parseRanges(int slave_id, SectionsMap& map) {
@@ -271,14 +271,12 @@ Register* DataManager::findDescribeRegOnlyByName(const std::string& name) {
     return result;
 }
 
-
 Register* DataManager::findRegOnlyByName(const std::string& name) {
     Register* result = nullptr;    
     result = findReadRegOnlyByName(name);
     if (!result) result = findDescribeRegOnlyByName(name);
     return result;
 }
-
 
 Register* DataManager::findReadReg(const std::string& name, const int func, const int slave_id) {
     Register* result = nullptr;

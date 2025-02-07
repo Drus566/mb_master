@@ -9,41 +9,39 @@
 namespace mb {
 namespace log {
 
-std::string logLevelToString(LogLevel level) {
-    switch (level) {
-        case INFO: return " [INFO] ";
-        case WARN: return " [WARN] ";
-        case ERROR: return " [ERROR] ";
-        case MESSAGE: return " ";
-        case TX: return " [TX] ";
-        case RX: return " [RX] ";
-        default: return " [INFO] ";
-    }
-}
-
-Logger* Logger::m_instance = nullptr;
+LogMode Logger::m_log_mode = CONSOLE_AND_FILE;
+Logger *Logger::m_instance = nullptr;
 
 Logger* Logger::Instance() {
-    if (!m_instance) m_instance = new Logger();
+    if (!m_instance) {
+        m_instance = new Logger();
+        m_instance->setWriteFlags();
+    }
     return m_instance;
 }
 
 Logger* Logger::Instance(std::string& filename) {
-    if (!m_instance) m_instance = new Logger(filename);
-    else { m_instance->setLogFile(filename); }
+    if (!m_instance) { 
+        m_instance = new Logger(filename);
+        m_instance->setWriteFlags();
+    }
+    else m_instance->setLogFile(filename);
     return m_instance;
 }
 
-Logger::Logger() {
-    m_log_file.open(MODBUS_LOG_DEFAULT_FILENAME, std::ios::app);
-    if (!m_log_file.is_open()) std::cerr << "Error open log file: " << MODBUS_LOG_DEFAULT_FILENAME << std::endl;
-    m_active = false;
+void Logger::setLogMode(const std::string &log_mode) { 
+    m_log_mode = stringToLogMode(log_mode);
+    Logger::Instance()->setWriteFlags();
 }
 
-Logger::Logger(std::string& filename) {
+Logger::Logger() : m_active(false) {
+    m_log_file.open(MODBUS_LOG_DEFAULT_FILENAME, std::ios::app);
+    if (!m_log_file.is_open()) std::cerr << "Error open log file: " << MODBUS_LOG_DEFAULT_FILENAME << std::endl;
+}
+
+Logger::Logger(std::string& filename) : m_active(false) {
     m_log_file.open(filename, std::ios::app);
     if (!m_log_file.is_open()) std::cerr << "Error open log file: " << filename << std::endl;
-    m_active = false;
 }
 
 Logger::~Logger() {
@@ -74,28 +72,28 @@ bool Logger::setLogFile(std::string& filename) {
 
 void Logger::rawLog(const std::string &message) {
     std::lock_guard<std::mutex> lock(m_mtx);
-    if (!m_active || !m_log_file.is_open())
-        return;
+    if (!m_active || message[0] == '\0' || message[0] == '\n') return;
 
-    setCurrentTime();
-    m_log_file << message;
+    std::ostringstream oss;
+
+    oss << message;
+    doLog(oss);
 }
 
 void Logger::log(LogLevel level, const std::string& message) {
     std::lock_guard<std::mutex> lock(m_mtx);
-    if (!m_active || !m_log_file.is_open()) return;
+    if (!m_active || message[0] == '\0' || message[0] == '\n') return;
 
-    if (message[0] == '\0' || message[0] == '\n') return;
-
+    std::ostringstream oss;
     setCurrentTime();
-    m_log_file << m_current_time << logLevelToString(level) << message;
+    oss << m_current_time << logLevelToString(level) << message;
+
+    doLog(oss);
 }
 
 void Logger::rawLog(const char* format, ...) {
     std::lock_guard<std::mutex> lock(m_mtx);
-    if (!m_active || !m_log_file.is_open()) return;
-
-    if (*format == '\0' || *format == '\n') return;
+    if (!m_active || *format == '\0' || *format == '\n') return;
 
     std::ostringstream oss;
     va_list args;
@@ -140,19 +138,19 @@ void Logger::rawLog(const char* format, ...) {
 
     va_end(args);
 
-    setCurrentTime();
-    m_log_file << oss.str() << std::endl;
+    doLog(oss);
 }
 
 void Logger::log(LogLevel level, const char* format, ...) {
     std::lock_guard<std::mutex> lock(m_mtx);
-    if (!m_active || !m_log_file.is_open()) return;
-
-    if (*format == '\0' || *format == '\n') return;
+    if (!m_active || *format == '\0' || *format == '\n') return;
 
     std::ostringstream oss;
     va_list args;
     va_start(args, format);
+
+    setCurrentTime();
+    oss << m_current_time << logLevelToString(level);
 
     const char* p = format;
     while (*p) {
@@ -193,15 +191,53 @@ void Logger::log(LogLevel level, const char* format, ...) {
 
     va_end(args);
 
-    setCurrentTime();
-    m_log_file << m_current_time << logLevelToString(level) << oss.str() << std::endl;
+    doLog(oss);
 }
-
 
 void Logger::setCurrentTime() {
     auto now = std::chrono::system_clock::now();
     auto now_c = std::chrono::system_clock::to_time_t(now);
     std::strftime(m_current_time, sizeof(m_current_time), "%Y-%m-%d %H:%M:%S", std::localtime(&now_c));
+}
+
+void Logger::setWriteFlags() {
+    if (m_log_mode == CONSOLE) {
+        m_write_console = true;
+        m_write_file = false;
+    } 
+    else if (m_log_mode == FILE) {
+        m_write_console = false;
+        m_write_file = true;
+    }
+    else if (m_log_mode == CONSOLE_AND_FILE) {
+        m_write_console = true;
+        m_write_file = true;
+    }
+}
+
+void Logger::doLog(std::ostringstream& oss) {
+    if (m_write_console) std::cout << oss.str() << std::endl;
+    if (m_write_file && m_log_file.is_open()) m_log_file << oss.str() << std::endl;
+}
+
+LogMode stringToLogMode(const std::string& log_mode) {
+    LogMode result = CONSOLE_AND_FILE;
+    if (log_mode == "CONSOLE") result = CONSOLE;
+    else if (log_mode == "CONSOLE_AND_FILE") result = CONSOLE_AND_FILE;
+    else if (log_mode == "FILE") result = FILE;
+    return result;
+}
+
+std::string logLevelToString(LogLevel level) {
+    switch (level) {
+        case INFO: return " [INFO] ";
+        case WARN: return " [WARN] ";
+        case ERROR: return " [ERROR] ";
+        case MESSAGE: return " ";
+        case TX: return " [TX] ";
+        case RX: return " [RX] ";
+        default: return " [INFO] ";
+    }
 }
 
 }

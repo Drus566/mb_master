@@ -13,7 +13,7 @@
 #define DEFAULT_PARITY 'N'
 
 /** ethernet default params */
-#define DEFAULT_IP "127.0.0.1"
+#define DEFAULT_IP "0.0.0.0"
 #define DEFAULT_PORT 502
 
 #define DEFAULT_DIRECT_REQUEST_PRIORITY 0 // all request in queue handles
@@ -307,22 +307,83 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager, 
 				std::this_thread::sleep_for(m_time_between_requests);
 			}
 		}
+
+		if (!read_requests.empty()) continue;
+
+					while (!direct_req_queue->empty()) {
+				if (m_direct_request_priority != 0) {
+					if (counter_direct_request < m_direct_request_priority) ++counter_direct_request;
+					else {
+						counter_direct_request = 0;
+						break;
+					}
+				}
+
+				response = false;
+
+				if (direct_req_queue->pop(r)) {
+					switch (r->function) {
+						case FuncNumber::READ_COIL:
+							response = m_modbus_master->readBits(r->slave_id, r->address, r->quantity, r->u8_out_mem);
+							break;
+
+						case FuncNumber::READ_INPUT_COIL:
+							response = m_modbus_master->readInputBits(r->slave_id, r->address, r->quantity, r->u8_out_mem);
+							break;
+
+						case FuncNumber::READ_REGS:
+							response = m_modbus_master->readRegisters(r->slave_id, r->address, r->quantity, r->u16_out_mem);
+							break;
+
+						case FuncNumber::READ_INPUT_REGS:
+							response = m_modbus_master->readInputRegisters(r->slave_id, r->address, r->quantity, r->u16_out_mem);
+							break;
+
+						case FuncNumber::WRITE_SINGLE_COIL:
+							response = m_modbus_master->writeBit(r->slave_id, r->address, *(r->u8_out_mem));
+							break;
+
+						case FuncNumber::WRITE_MULTIPLE_COILS:
+							response = m_modbus_master->writeBits(r->slave_id, r->address, r->quantity, r->u8_out_mem);
+							break;
+
+						case FuncNumber::WRITE_SINGLE_WORD:
+							response = m_modbus_master->writeRegister(r->slave_id, r->address, *(r->u16_out_mem));
+							break;
+
+						case FuncNumber::WRITE_MULTIPLE_WORDS:
+							response = m_modbus_master->writeRegisters(r->slave_id, r->address, r->quantity, r->u16_out_mem);
+							break;
+					}
+				}
+
+				r->setStatus(response);
+				r->setFinish(true);
+
+				if (!response) { 
+					m_modbus_master->flush();
+					++error;
+				} 
+				else { 
+					error = 0;
+					m_connect.store(true);
+				}
+
+				if (error > m_max_count_errors) { 
+					error = m_max_count_errors;
+					m_connect.store(false);
+				}
+
+				std::this_thread::sleep_for(m_time_between_requests);
+			}
 	}
 }
 
 void ActionManager::printInfo() {
 	if (m_config->printSettings()) {
-		std::cout << "******************************** SETTINGS *******************************" << std::endl;
 		Logger::Instance()->rawLog("******************************** SETTINGS *******************************");
 		
 		if (m_modbus_connection.type == ModbusConnectionType::RTU) {
-			std::cout << "Type=RTU" << std::endl;
-			std::cout << "SerialPort=" << m_modbus_connection.rtu.serial_port << std::endl;
-			std::cout << "Baudrate=" << m_modbus_connection.rtu.baudrate << std::endl;
-			std::cout << "StopBit=" << m_modbus_connection.rtu.stop_bit << std::endl;
-			std::cout << "DataBits=" << m_modbus_connection.rtu.data_bits << std::endl;
-			std::cout << "Parity=" << m_modbus_connection.rtu.parity << std::endl;
-
 			Logger::Instance()->rawLog("Type=RTU");
 			Logger::Instance()->rawLog("SerialPort=%s", m_modbus_connection.rtu.serial_port.c_str());
 			Logger::Instance()->rawLog("Baudrate=%d", m_modbus_connection.rtu.baudrate);
@@ -332,21 +393,10 @@ void ActionManager::printInfo() {
 		}
 
 		else if (m_modbus_connection.type == ModbusConnectionType::ETH) {
-			std::cout << "Type=ETH(Modbus TCP)" << std::endl;
-			std::cout << "Ip=" << m_modbus_connection.eth.ip << std::endl;
-			std::cout << "Port=" << m_modbus_connection.eth.port << std::endl;
-
 			Logger::Instance()->rawLog("Type=ETH(Modbus TCP)");
-			Logger::Instance()->rawLog("Ip=%s", m_modbus_connection.eth.ip);
+			Logger::Instance()->rawLog("Ip=%s", m_modbus_connection.eth.ip.c_str());
 			Logger::Instance()->rawLog("Port=%d", m_modbus_connection.eth.port);
 		}
-
-		std::cout << "MaxCountRegsRead=" << m_data_manager->getMaxCountReadRegs() << std::endl;
-		std::cout << "TimeBetweenRequests=" << m_time_between_requests.count() << " milliseconds" << std::endl;
-		std::cout << "ResponseTimeout=" << m_modbus_connection.response_timeout << " milliseconds" << std::endl;
-		std::cout << "ByteTimeout=" << m_modbus_connection.byte_timeout << " milliseconds" << std::endl;
-		std::cout << "PoolDelay=" << m_poll_delay.count() << " milliseconds" << std::endl;
-		std::cout << "MaxErrors=" << m_max_count_errors << std::endl;
 
 		Logger::Instance()->rawLog("MaxCountRegsRead=%d", m_data_manager->getMaxCountReadRegs());
 		Logger::Instance()->rawLog("TimeBetweenRequests=%d milliseconds", m_time_between_requests.count());
@@ -355,7 +405,6 @@ void ActionManager::printInfo() {
 		Logger::Instance()->rawLog("PoolDelay=%d milliseconds", m_poll_delay.count());
 		Logger::Instance()->rawLog("MaxErrors=%d milliseconds", m_max_count_errors);
 
-		std::cout << "*************************************************************************" << std::endl;
 		Logger::Instance()->rawLog("*************************************************************************");
 	}
 }

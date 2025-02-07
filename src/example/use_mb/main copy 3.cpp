@@ -16,6 +16,11 @@ int main(void) {
 		return 0;
 	}
 
+	float float_data;
+	mb->readFloat32(&float_data, 1, 3, 200, 0, 1, mb::types::RegDataOrder::CD_AB);
+	mb->readFloat32(&float_data, 1, 3, 210, 0, 1, mb::types::RegDataOrder::AB_CD);
+	mb->readFloat32(&float_data, 1, 3, 220, 0, 1, mb::types::RegDataOrder::BA_DC);
+	mb->readFloat32(&float_data, 1, 3, 230, 0, 1, mb::types::RegDataOrder::DC_BA);
 
 	// mb->startDebug();
 
@@ -43,6 +48,11 @@ int main(void) {
 	// mb::IMB::ModbusData* d11 = mb->getData(312,3);
 	// mb::IMB::ModbusData* d12 = mb->getData(314,3);
 	// mb::IMB::ModbusData* d13 = mb->getData(316,3);
+
+	uint16_t data[2];
+	void *result_ptr = static_cast<void *>(data);
+	uint16_t write_data[] = {555, 333};
+	void *write_ptr = static_cast<void *>(data);
 
 	// mb->writeRaw(uint16_t* vals, int slave_id, int adr, int func, int count);
 
@@ -84,39 +94,36 @@ int main(void) {
 	// if (g == nullptr) std::cout << "GGWP" << std::endl;
 	// g->getBit();
 
-	float float_data[5];
 
 	while(true) {
-
-		mb->readFloat32(float_data, 1, 3, 200, 5, 5, mb::types::RegDataOrder::CD_AB);
-
-		for (int i = 0; i < 5; i++) {
-			std::cout << "Data: " << float_data[i] << std::endl;
-		}
-
-		mb->readFloat32(float_data, 1, 3, 210, 5, 5, mb::types::RegDataOrder::AB_CD);
-
-		for (int i = 0; i < 5; i++) {
-			// std::cout << "Data: " << float_data[i] << std::endl;
-			printf("Data: %.4f\n", float_data[i]);
-		}
-
-		// mb->readFloat32(float_data, 1, 3, 220, 3, 1, mb::types::RegDataOrder::BA_DC);
-		// for (int i = 0; i < 5; i++) {
-		// 	std::cout << "Data: " << float_data[i] << std::endl;
-		// }
-
-		// mb->readFloat32(float_data, 1, 3, 230, 3, 1, mb::types::RegDataOrder::DC_BA);
-		// for (int i = 0; i < 5; i++) {
-		// 	std::cout << "Data: " << float_data[i] << std::endl;
-		// }
-
 		// if (mb->runRequest(result_ptr, 1, 1, 802, 2)) {
 		// 	std::cout << static_cast<int>(data[0]) << " " << static_cast<int>(data[1]) << std::endl;
 		// }
 
 		// std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
+		write_data[0] = 555;
+		write_data[1] = 333;
+		mb->runRequest(write_data, "ww1", 2);
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+		if (mb->runRequest(result_ptr, 1, 3, 400, 2)) {
+			std::cout << static_cast<int>(data[0]) << " " << static_cast<int>(data[1]) << std::endl;
+		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		write_data[0] = 11;
+		write_data[1] = 12;
+		mb->runRequest(write_data, "ww1", 2);
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+		if (mb->runRequest(result_ptr, "rw1", 2)) {
+			std::cout << static_cast<int>(data[0]) << " " << static_cast<int>(data[1]) << std::endl;
+		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
 		// std::cout << "**** DATA ****" << std::endl;
 		// std::cout << "Func 1:" << std::endl;

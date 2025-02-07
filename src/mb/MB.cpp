@@ -21,6 +21,8 @@ MB::~MB() {
 }
 
 bool MB::start() {
+	initLog();
+
 	Logger::Instance()->log(LogLevel::INFO, "============== Start MB ==============");
 
 	if (m_start) {
@@ -58,11 +60,17 @@ void MB::startLog() {
 	Logger::Instance()->setActive(true);
 }
 
-
 void MB::stopLog() {
 	m_action_manager->setLog(false);
 	Logger::Instance()->setActive(false); 
 }
+
+void MB::setLogMode(char *mode) {
+	std::string mode_str(mode);
+	Logger::setLogMode(mode_str);
+}
+
+void MB::setLogMode(const std::string &mode) { Logger::setLogMode(mode); }
 
 void MB::startDebug() { m_action_manager->setDebug(true); }
 
@@ -73,6 +81,7 @@ bool MB::runRequest(void *vals, const int slave_id, const int func, const int ad
 	return m_action_manager->handleDirectRequest(vals, slave_id, func, addr, count);
 }
 
+// count 1 is one
 bool MB::runRequest(void *vals, const std::string &name, int count = 1) {
 	if (count < 1) return false;
 
@@ -80,9 +89,36 @@ bool MB::runRequest(void *vals, const std::string &name, int count = 1) {
 	Register *reg = m_data_manager->findRegOnlyByName(name);
 
 	if (reg) {
-		if (!isCoilFunc(reg->function) && isDwordDataType(reg->reg_info.data_type) && count == 1) count = 2;
+		if (!isCoilFunc(reg->function) && isDwordDataType(reg->reg_info.data_type) && count < 2) {
+			count = 2;
+		}
 		result = m_action_manager->handleDirectRequest(vals, reg->slave_id, reg->function, reg->address, count);
 	}
+	return result;
+}
+
+bool MB::readFloat32(float* vals, const int slave_id, const int func, const int addr, int precision = 0, int count = 1, RegDataOrder order = RegDataOrder::CD_AB) {
+	int word_count = count * 2;
+	uint16_t word_vals[word_count];
+	bool result = runRequest(word_vals, slave_id, func, addr, word_count);
+	if (result) {
+		for (int i = 0, j = 0; i < count; i++, j+=2) {
+			ModbusTrans::interpretReg32(*(vals + i), word_vals + j, RegDataType::FLOAT32, order, precision);
+		}
+	}
+	return result;
+}
+
+bool MB::readFloat32(void *vals, const std::string &name, int count = 1) {
+	int word_count = count * 2;
+	uint16_t word_vals[word_count];
+	bool result = runRequest(word_vals, name, word_count);
+	if (result) {
+		for (int i = 0, j = 0; i < count; i++, j+=2) {
+			ModbusTrans::interpretReg32(*(vals + i), word_vals + j, RegDataType::FLOAT32, order, precision);
+		}
+	}
+
 	return result;
 }
 
@@ -208,6 +244,17 @@ float MB::Data::getFloat() {
 	m_mem_manager->getDWord(&val, m_u16_data_ptr);
 	mb::types::ModbusTrans::interpretReg32(result, val_ptr, *m_reg);
 	return result;
+}
+
+void MB::initLog() {
+	if (m_config->log()) {
+		std::string log_file = m_config->logFile();
+		if (!log_file.empty()) startLog(log_file);
+		else startLog();
+	}
+
+	std::string log_mode = m_config->logMode();
+	if (!log_mode.empty()) setLogMode(log_mode);
 }
 
 // Data IMB::getData(const int addr, const int func, const int slave_id) { return Data(); }

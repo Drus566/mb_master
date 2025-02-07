@@ -28,28 +28,21 @@ public:
    void startLog(std::string& filename) override;
    void startLog() override;
    void stopLog() override;
+   void setLogMode(char *mode) override;
+   void setLogMode(const std::string &mode) override;
    void startDebug() override;
    void stopDebug() override;
+
+   bool runRequest(void *vals, const int slave_id, const int func, const int addr, int count) override;
+   bool runRequest(void *vals, const std::string &name, int count) override;
+   
+   bool readFloat32(float* vals, const int slave_id, const int func, const int addr, int precision, int count, RegDataOrder order) override;
+   bool readFloat32(void *vals, const std::string &name, int count) override;
 
    IMB::ModbusData* getDataOnlyByName(const std::string& name);
    IMB::ModbusData* getData(const std::string& name, const int func, const int slave_id) override;
    IMB::ModbusData* getData(const int addr, const int func, const int slave_id) override;
    
-   // Data getCoilData(const std::string& name, const int slave_id = MB_DEFAULT_SLAVE) override; 
-   // Data getCoilData(const int addr, const int slave_id = MB_DEFAULT_SLAVE) override; 
- 
-   // Data getDiscreteData(const std::string& name, const int slave_id = MB_DEFAULT_SLAVE) override; 
-   // Data getDiscreteData(const int addr, const int slave_id = MB_DEFAULT_SLAVE) override; 
-
-   // Data getHoldingRegisterData(const std::string& name, const int slave_id = MB_DEFAULT_SLAVE) override; 
-   // Data getHoldingRegisterData(const int addr, const int slave_id = MB_DEFAULT_SLAVE) override; 
- 
-   // Data getInputRegisterData(const std::string& name, const int slave_id = MB_DEFAULT_SLAVE) override; 
-   // Data getInputRegisterData(const int addr, const int slave_id = MB_DEFAULT_SLAVE) override;
-
-   bool runRequest(void* vals, const int slave_id, const int func, const int addr, int count);
-   bool runRequest(void* vals, const std::string &name, int count);
-
    class Data : public ModbusData {
       public:
          Data(MemManager* mem_manager, 
@@ -84,6 +77,8 @@ private:
    ActionManager* m_action_manager;
 
 	bool m_start;
+
+   void initLog();
 }; // MB
  
 } // mb
