@@ -13,10 +13,13 @@ namespace data {
     
 using namespace mb::types;
 
+constexpr RegDataOrder DEFAULT_DATA_ORDER = RegDataOrder::CD_AB;
+
 class RegManager {    
     public:
-        RegManager() {}
+        RegManager(RegDataOrder data_order);
 
+        RegDataOrder getDataOrder();
         std::forward_list<Register>& getReadRegs();
         std::forward_list<Register>& getDescribeRegs();
         bool addReg(bool is_describe, const int slave_id, const FuncNumber func, const std::string& name, std::string& reg_str);
@@ -25,12 +28,12 @@ class RegManager {
         void printInfo();
 
     private:
+        RegDataOrder m_data_order;
+
         std::forward_list<Register> m_regs;
-        // std::vector<Register> m_write_regs;
         std::forward_list<Register> m_describe_regs;
 
         bool parseReg(const bool is_describe, const std::string &reg_str, int &address, RegisterInfo &reg_info);
-        // bool parseWriteReg(const bool is_describe, const std::string& reg_str, int& address, FuncNumber func, RegisterInfo* reg_info);
 
         void printRegInfo(const Register &r);
 };

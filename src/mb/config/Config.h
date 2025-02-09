@@ -30,6 +30,7 @@ class Config {
     unsigned int stopBit() const { return get<unsigned int>(SETTINGS_SECTION, "StopBit"); }
     unsigned int dataBits() const { return get<unsigned int>(SETTINGS_SECTION, "DataBits"); }
     std::string parity() const { return getString(SETTINGS_SECTION, "Parity"); }
+    std::string dataOrder() const { return getString(SETTINGS_SECTION, "DataOrder"); }
 
     std::string ip() const { return getString(SETTINGS_SECTION, "Ip"); }
     unsigned int port() const { return get<unsigned int>(SETTINGS_SECTION, "Port"); }

@@ -52,6 +52,8 @@ inline bool getRegDataTypeFromStr(RegDataType& data_type, const std::string& str
 
 /** @brief расположение регистров в памяти для 32/64 разрядных значений */
 enum class RegDataOrder {
+    // отсутствует
+    NONE, 
     // для 32 битных
     AB_CD,
     CD_AB,
@@ -114,6 +116,14 @@ enum FuncNumber {
     WRITE_MULTIPLE_WORDS = 16
 };
 
+inline bool isReadWordFunc(const FuncNumber& func) {
+    return func == FuncNumber::READ_REGS || func == FuncNumber::READ_INPUT_REGS;
+}
+
+inline bool isReadCoilFunc(const FuncNumber& func) {
+    return func == FuncNumber::READ_COIL || func == FuncNumber::READ_INPUT_COIL;
+}
+
 inline bool isReadFunc(const FuncNumber& func) { 
     return (func == FuncNumber::READ_COIL || func == FuncNumber::READ_INPUT_COIL || 
             func == FuncNumber::READ_REGS || func == FuncNumber::READ_INPUT_REGS);
@@ -124,13 +134,48 @@ inline bool isCoilFunc(const FuncNumber& func) {
             func == FuncNumber::WRITE_SINGLE_COIL || func == FuncNumber::WRITE_MULTIPLE_COILS);
 }
 
+inline bool isWriteMultipleFunc(const FuncNumber& func) { return (func == FuncNumber::WRITE_MULTIPLE_COILS || func == FuncNumber::WRITE_MULTIPLE_WORDS); }
+
+
+inline bool isWriteWordOrWordsFunc(const FuncNumber& func) { 
+    return (func == FuncNumber::WRITE_SINGLE_WORD || func == FuncNumber::WRITE_MULTIPLE_WORDS);
+}
+
+inline bool isWriteCoilOrCoilsFunc(const FuncNumber& func) {
+    return (func == FuncNumber::WRITE_SINGLE_COIL || func == FuncNumber::WRITE_MULTIPLE_COILS);
+}
+
+
+
+
+inline bool isReadWordFunc(const int func) {
+    return func == FuncNumber::READ_REGS || func == FuncNumber::READ_INPUT_REGS;
+}
+
+inline bool isReadCoilFunc(const int func) {
+    return func == FuncNumber::READ_COIL || func == FuncNumber::READ_INPUT_COIL;
+}
+
+inline bool isReadFunc(const int func) { 
+    return (func == FuncNumber::READ_COIL || func == FuncNumber::READ_INPUT_COIL || 
+            func == FuncNumber::READ_REGS || func == FuncNumber::READ_INPUT_REGS);
+}
+
 inline bool isCoilFunc(const int func) {
     return (func == FuncNumber::READ_COIL || func == FuncNumber::READ_INPUT_COIL ||
             func == FuncNumber::WRITE_SINGLE_COIL || func == FuncNumber::WRITE_MULTIPLE_COILS);
 }
 
+inline bool isWriteMultipleFunc(const int func) { return (func == FuncNumber::WRITE_MULTIPLE_COILS || func == FuncNumber::WRITE_MULTIPLE_WORDS); }
 
-inline bool isWriteMultipleFunc(const FuncNumber& func) { return (func == FuncNumber::WRITE_MULTIPLE_COILS || func == FuncNumber::WRITE_MULTIPLE_WORDS); }
+
+inline bool isWriteWordOrWordsFunc(const int func) { 
+    return (func == FuncNumber::WRITE_SINGLE_WORD || func == FuncNumber::WRITE_MULTIPLE_WORDS);
+}
+
+inline bool isWriteCoilOrCoilsFunc(const int func) {
+    return (func == FuncNumber::WRITE_SINGLE_COIL || func == FuncNumber::WRITE_MULTIPLE_COILS);
+}
 
 } // types
 } // mb

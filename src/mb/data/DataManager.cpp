@@ -35,10 +35,15 @@ bool DataManager::start() {
     int mcbr = m_config->maxCountRegsRead();
     if (mcbr <= 0) mcbr = DEFAULT_MAX_COUNT_REGS_READ;
 
+    RegDataOrder data_order = RegDataOrder::NONE;
+    std::string data_order_str = m_config->dataOrder();
+    data_order_str = toUpperCase(data_order_str);
+    if (!getRegDataOrderFromStr(data_order, data_order_str)) data_order = DEFAULT_DATA_ORDER;
+
     // Logger::Instance()->log(LogLevel::INFO, "Max count regs read %d", mcbr);
 
     m_range_manager = new RangeManager;
-    m_reg_manager = new RegManager;
+    m_reg_manager = new RegManager(data_order);
     m_request_manager = new RequestManager(mcbr);
 
     int slave_id = m_config->slaveId();
@@ -359,6 +364,8 @@ uint16_t* DataManager::findU16DataMemory(const int addr, const int func, const i
 const std::vector<Request>& DataManager::getReadRequests() { return m_request_manager->getReadRequests(); }
 
 const int DataManager::getMaxCountReadRegs() { return m_request_manager->getMaxCountRegsRead(); }
+
+const RegDataOrder DataManager::getDataOrder() { return m_reg_manager->getDataOrder(); }
 
 // uint16_t DataManager::getCoil(uint16_t* ptr) { 
 //     uint16_t val;

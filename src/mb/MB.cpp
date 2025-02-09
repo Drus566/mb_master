@@ -81,7 +81,7 @@ bool MB::runRequest(void *vals, const int slave_id, const int func, const int ad
 	return m_action_manager->handleDirectRequest(vals, slave_id, func, addr, count);
 }
 
-// count 1 is one
+// count всегда 1, при любом типе данных coil word dword.
 bool MB::runRequest(void *vals, const std::string &name, int count = 1) {
 	if (count < 1) return false;
 
@@ -89,15 +89,123 @@ bool MB::runRequest(void *vals, const std::string &name, int count = 1) {
 	Register *reg = m_data_manager->findRegOnlyByName(name);
 
 	if (reg) {
-		if (!isCoilFunc(reg->function) && isDwordDataType(reg->reg_info.data_type) && count < 2) {
-			count = 2;
-		}
+		if (!isCoilFunc(reg->function) && isDwordDataType(reg->reg_info.data_type) && count < 2) count = 2;
 		result = m_action_manager->handleDirectRequest(vals, reg->slave_id, reg->function, reg->address, count);
 	}
 	return result;
 }
 
-bool MB::readFloat32(float* vals, const int slave_id, const int func, const int addr, int precision = 0, int count = 1, RegDataOrder order = RegDataOrder::CD_AB) {
+bool MB::readCoil(bool* vals, const int slave_id, const int func, const int addr, int count = 1) {
+	if (!isReadCoilFunc(func)) return false;
+	return runRequest(vals, slave_id, func, addr, count);
+}
+
+bool MB::readCoil(bool* vals, const std::string &name, int count = 1) {
+	if (count < 1) return false;
+
+	bool result = false;
+	Register *reg = m_data_manager->findRegOnlyByName(name);
+
+	if (reg && isReadCoilFunc(reg->function)) {
+		result = m_action_manager->handleDirectRequest(vals, reg->slave_id, reg->function, reg->address, count);
+	}
+	return result;
+}
+
+bool MB::readInt16(int* vals, const int slave_id, const int func, const int addr, int count = 1) {
+	if (!isReadWordFunc(func)) return false;
+
+	int16_t new_vals[count];
+	bool result = runRequest(vals, slave_id, func, addr, count);
+	for (int i = 0; i < count; i++) {
+		vals[i] = new_vals[i];
+	}
+	return result;
+}
+
+bool MB::readInt16(int* vals, const std::string &name, int count = 1) {
+	if (count < 1) return false;
+
+	bool result = false;
+	Register *reg = m_data_manager->findRegOnlyByName(name);
+
+	if (reg && reg->reg_info.data_type == RegDataType::INT16 && isReadWordFunc(reg->function)) {
+		int16_t new_vals[count];
+		result = m_action_manager->handleDirectRequest(new_vals, reg->slave_id, reg->function, reg->address, count);
+		if (result) {
+			for (int i = 0; i < count; i++) {
+				vals[i] = new_vals[i];
+			}
+		}
+	}
+	return result;
+}
+
+bool MB::readUInt16(int* vals, const int slave_id, const int func, const int addr, int count = 1) {
+	if (!isReadWordFunc(func)) return false;
+
+	uint16_t new_vals[count];
+	bool result = runRequest(vals, slave_id, func, addr, count);
+	for (int i = 0; i < count; i++) {
+		vals[i] = new_vals[i];
+	}
+	return result;
+}
+
+bool MB::readUInt16(int* vals, const std::string &name, int count = 1) {
+	if (count < 1) return false;
+
+	bool result = false;
+	Register *reg = m_data_manager->findRegOnlyByName(name);
+
+	if (reg && reg->reg_info.data_type == RegDataType::UINT16 && isReadWordFunc(reg->function)) {
+		uint16_t new_vals[count];
+		result = m_action_manager->handleDirectRequest(new_vals, reg->slave_id, reg->function, reg->address, count);
+		if (result) {
+			for (int i = 0; i < count; i++) {
+				vals[i] = new_vals[i];
+			}
+		}
+	}
+	return result;
+}
+
+bool MB::readFloat16(float* vals, const int slave_id, const int func, const int addr, int count = 1, int precision = 1) {
+	if (!isReadWordFunc(func)) return false;
+
+	int16_t new_vals[count];
+	bool result = runRequest(new_vals, slave_id, func, addr, count);
+	if (result) {
+		for (int i = 0; i < count; i++) {
+			ModbusTrans::setPrecisionFloat16(&new_vals[i], precision);
+			vals[i] = new_vals[i];
+		}
+	}
+	return result;
+}
+
+bool MB::readFloat16(float* vals, const std::string &name, int count = 1) {
+	if (count < 1) return false;
+
+	bool result = false;
+	Register *reg = m_data_manager->findRegOnlyByName(name);
+
+	if (reg && reg->reg_info.data_type == RegDataType::FLOAT16 && isReadWordFunc(reg->function)) {
+		int16_t new_vals[count];
+		result = m_action_manager->handleDirectRequest(new_vals, reg->slave_id, reg->function, reg->address, count);
+		if (result) {
+			for (int i = 0; i < count; i++) {
+				ModbusTrans::setPrecisionFloat16(&new_vals[i], reg->reg_info.precision);
+				vals[i] = new_vals[i];
+			}
+		}
+	}
+	return result;
+}
+
+bool MB::readFloat32(float* vals, const int slave_id, const int func, const int addr, int precision = 2, int count = 1, RegDataOrder order = RegDataOrder::NONE) {
+	if (order == RegDataOrder::NONE) order = m_data_manager->getDataOrder();
+
 	int word_count = count * 2;
 	uint16_t word_vals[word_count];
 	bool result = runRequest(word_vals, slave_id, func, addr, word_count);
@@ -109,16 +217,247 @@ bool MB::readFloat32(float* vals, const int slave_id, const int func, const int 
 	return result;
 }
 
-bool MB::readFloat32(void *vals, const std::string &name, int count = 1) {
-	int word_count = count * 2;
-	uint16_t word_vals[word_count];
-	bool result = runRequest(word_vals, name, word_count);
-	if (result) {
-		for (int i = 0, j = 0; i < count; i++, j+=2) {
-			ModbusTrans::interpretReg32(*(vals + i), word_vals + j, RegDataType::FLOAT32, order, precision);
+bool MB::readFloat32(float* vals, const std::string &name, int count = 1) {
+	if (count < 1) return false;
+
+	bool result = false;
+	Register *reg = m_data_manager->findRegOnlyByName(name);
+
+	if (reg && reg->reg_info.data_type == RegDataType::FLOAT32 && isReadWordFunc(reg->function)) {
+		int word_count = count * 2;
+		uint16_t word_vals[word_count];
+		result = m_action_manager->handleDirectRequest(word_vals, reg->slave_id, reg->function, reg->address, word_count);
+		if (result) {
+			for (int i = 0, j = 0; i < count; i++, j+=2) {
+				ModbusTrans::interpretReg32(*(vals + i), word_vals + j, RegDataType::FLOAT32, reg->reg_info.order, reg->reg_info.precision);
+			}
 		}
 	}
+	return result;
+}
 
+bool MB::readInt32(int* vals, const int slave_id, const int func, const int addr, int count = 1, RegDataOrder order = RegDataOrder::NONE) {
+	if (order == RegDataOrder::NONE) order = m_data_manager->getDataOrder();
+
+	int word_count = count * 2;
+	uint16_t word_vals[word_count];
+	bool result = runRequest(word_vals, slave_id, func, addr, word_count);
+	if (result) {
+		for (int i = 0, j = 0; i < count; i++, j+=2) {
+			ModbusTrans::interpretReg32(*(vals + i), word_vals + j, RegDataType::INT32, order, -1);
+		}
+	}
+	return result;
+}
+
+bool MB::readInt32(int* vals, const std::string &name, int count = 1) {
+	if (count < 1) return false;
+
+	bool result = false;
+	Register *reg = m_data_manager->findRegOnlyByName(name);
+
+	if (reg && reg->reg_info.data_type == RegDataType::INT32 && isReadWordFunc(reg->function)) {
+		int word_count = count * 2;
+		uint16_t word_vals[word_count];
+		result = m_action_manager->handleDirectRequest(word_vals, reg->slave_id, reg->function, reg->address, word_count);
+		if (result) {
+			for (int i = 0, j = 0; i < count; i++, j+=2) {
+				ModbusTrans::interpretReg32(*(vals + i), word_vals + j, RegDataType::INT32, reg->reg_info.order, reg->reg_info.precision);
+			}
+		}
+	}
+	return result;
+}
+
+bool MB::readUInt32(unsigned int* vals, const int slave_id, const int func, const int addr, int count = 1, RegDataOrder order = RegDataOrder::NONE) {
+	if (order == RegDataOrder::NONE) order = m_data_manager->getDataOrder();
+
+	int word_count = count * 2;
+	uint16_t word_vals[word_count];
+	bool result = runRequest(word_vals, slave_id, func, addr, word_count);
+	if (result) {
+		for (int i = 0, j = 0; i < count; i++, j+=2) {
+			ModbusTrans::interpretReg32(*(vals + i), word_vals + j, RegDataType::UINT32, order, -1);
+		}
+	}
+	return result;
+}
+
+bool MB::readUInt32(unsigned int* vals, const std::string &name, int count = 1) {
+	if (count < 1) return false;
+
+	bool result = false;
+	Register *reg = m_data_manager->findRegOnlyByName(name);
+
+	if (reg && reg->reg_info.data_type == RegDataType::UINT32 && isReadWordFunc(reg->function)) {
+		int word_count = count * 2;
+		uint16_t word_vals[word_count];
+		result = m_action_manager->handleDirectRequest(word_vals, reg->slave_id, reg->function, reg->address, word_count);
+		if (result) {
+			for (int i = 0, j = 0; i < count; i++, j+=2) {
+				ModbusTrans::interpretReg32(*(vals + i), word_vals + j, RegDataType::UINT32, reg->reg_info.order, reg->reg_info.precision);
+			}
+		}
+	}
+	return result;
+}
+
+bool MB::writeCoil(bool* vals, const int slave_id, const int func, const int addr, int count = 1) {
+	if (!isWriteCoilOrCoilsFunc(func)) return false;
+	return runRequest(vals, slave_id, func, addr, count);
+}
+
+bool MB::writeCoil(bool* vals, const std::string &name, int count = 1) {
+	if (count < 1) return false;
+
+	bool result = false;
+	Register *reg = m_data_manager->findRegOnlyByName(name);
+
+	if (reg && isWriteCoilOrCoilsFunc(reg->function)) {
+		result = m_action_manager->handleDirectRequest(vals, reg->slave_id, reg->function, reg->address, count);
+	}
+	return result;
+}
+
+bool MB::writeInt16(int* vals, const int slave_id, const int func, const int addr, int count = 1) {
+	if (!isWriteWordOrWordsFunc(func)) return false;
+	
+	int16_t new_vals[count];
+	for (int i = 0; i < count; i++) {
+		new_vals[i] = static_cast<int16_t>(vals[i]);
+	}
+
+	return runRequest(vals, slave_id, func, addr, count);
+}
+
+bool MB::writeInt16(int* vals, const std::string &name, int count = 1) {
+	if (count < 1) return false;
+
+	bool result = false;
+	Register *reg = m_data_manager->findRegOnlyByName(name);
+
+	if (reg && reg->reg_info.data_type == RegDataType::INT16 && isWriteWordOrWordsFunc(reg->function)) {
+		int16_t new_vals[count];
+		for (int i = 0; i < count; i++) {
+			new_vals[i] = static_cast<int16_t>(vals[i]);
+		}
+		result = m_action_manager->handleDirectRequest(new_vals, reg->slave_id, reg->function, reg->address, count);
+	}
+	return result;
+}
+
+bool MB::writeUInt16(int* vals, const int slave_id, const int func, const int addr, int count = 1) {
+	if (!isWriteWordOrWordsFunc(func)) return false;
+	
+	uint16_t new_vals[count];
+	for (int i = 0; i < count; i++) {
+		new_vals[i] = static_cast<uint16_t>(vals[i]);
+	}
+
+	return runRequest(vals, slave_id, func, addr, count);
+}
+
+bool MB::writeUInt16(int* vals, const std::string &name, int count = 1) {
+	if (count < 1) return false;
+
+	bool result = false;
+	Register *reg = m_data_manager->findRegOnlyByName(name);
+
+	if (reg && reg->reg_info.data_type == RegDataType::INT16 && isWriteWordOrWordsFunc(reg->function)) {
+		uint16_t new_vals[count];
+		for (int i = 0; i < count; i++) {
+			new_vals[i] = static_cast<uint16_t>(vals[i]);
+		}
+		result = m_action_manager->handleDirectRequest(new_vals, reg->slave_id, reg->function, reg->address, count);
+	}
+	return result;
+}
+
+// Изменяет значение vals
+bool MB::writeFloat16(float* vals, const int slave_id, const int func, const int addr, int count = 1, int precision = 1) {
+	if (!isWriteWordOrWordsFunc(func)) return false;
+	
+	int16_t new_vals[count];
+	for (int i = 0; i < count; i++) {
+		ModbusTrans::setPrecisionFloat16ForWrite(vals[i], precision);
+		new_vals[i] = static_cast<int16_t>(vals[i]);
+	}
+
+	return runRequest(vals, slave_id, func, addr, count);
+}
+
+bool MB::writeFloat16(float* vals, const std::string &name, int count = 1, int precision = 1) {
+	if (count < 1) return false;
+
+	bool result = false;
+	Register *reg = m_data_manager->findRegOnlyByName(name);
+
+	if (reg && reg->reg_info.data_type == RegDataType::FLOAT16 && isWriteWordOrWordsFunc(reg->function)) {
+		int16_t new_vals[count];
+		for (int i = 0; i < count; i++) {
+			ModbusTrans::setPrecisionFloat16ForWrite(vals[i], precision);
+			new_vals[i] = static_cast<int16_t>(vals[i]);
+		}
+		result = m_action_manager->handleDirectRequest(new_vals, reg->slave_id, reg->function, reg->address, count);
+	}
+	return result;
+}
+
+
+bool MB::writeFloat32(float* vals, const int slave_id, const int addr, int count = 1) {	
+	int word_count = count * 2;
+	bool result = runRequest(vals, slave_id, FuncNumber::WRITE_MULTIPLE_WORDS, addr, word_count);
+	return result;
+}
+
+bool MB::writeFloat32(float* vals, const std::string &name, int count = 1) {
+	if (count < 1) return false;
+
+	bool result = false;
+	Register *reg = m_data_manager->findRegOnlyByName(name);
+
+	if (reg && reg->reg_info.data_type == RegDataType::FLOAT32 && reg->function == FuncNumber::WRITE_MULTIPLE_WORDS) {
+		int word_count = count * 2;
+		result = m_action_manager->handleDirectRequest(vals, reg->slave_id, reg->function, reg->address, word_count);
+	}
+	return result;
+}
+
+bool MB::writeInt32(int* vals, const int slave_id, const int addr, int count = 1) {	
+	int word_count = count * 2;
+	bool result = runRequest(vals, slave_id, FuncNumber::WRITE_MULTIPLE_WORDS, addr, word_count);
+	return result;
+}
+
+bool MB::writeInt32(int* vals, const std::string &name, int count = 1) {
+	if (count < 1) return false;
+
+	bool result = false;
+	Register *reg = m_data_manager->findRegOnlyByName(name);
+
+	if (reg && reg->reg_info.data_type == RegDataType::INT32 && reg->function == FuncNumber::WRITE_MULTIPLE_WORDS) {
+		int word_count = count * 2;
+		result = m_action_manager->handleDirectRequest(vals, reg->slave_id, FuncNumber::WRITE_MULTIPLE_WORDS, reg->address, word_count);
+	}
+	return result;
+}
+
+bool MB::writeUInt32(unsigned int* vals, const int slave_id, const int addr, int count = 1) {	
+	int word_count = count * 2;
+	bool result = runRequest(vals, slave_id, FuncNumber::WRITE_MULTIPLE_WORDS, addr, word_count);
+	return result;
+}
+
+bool MB::writeUInt32(unsigned int* vals, const std::string &name, int count = 1) {
+	if (count < 1) return false;
+
+	bool result = false;
+	Register *reg = m_data_manager->findRegOnlyByName(name);
+
+	if (reg && reg->reg_info.data_type == RegDataType::UINT32 && reg->function == FuncNumber::WRITE_MULTIPLE_WORDS) {
+		int word_count = count * 2;
+		result = m_action_manager->handleDirectRequest(vals, reg->slave_id, FuncNumber::WRITE_MULTIPLE_WORDS, reg->address, word_count);
+	}
 	return result;
 }
 

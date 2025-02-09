@@ -50,8 +50,47 @@ public:
     virtual bool runRequest(void* vals, const int slave_id, const int func, const int addr, int count = 1) = 0;
     virtual bool runRequest(void* vals, const std::string &name, int count = 1) = 0;
 
-    virtual bool readFloat32(float *vals, const int slave_id, const int func, const int addr, int precision, int count, RegDataOrder order) = 0;
-    virtual bool readFloat32(void *vals, const std::string &name, int count) = 0;
+    virtual bool readCoil(bool* vals, const int slave_id, const int func, const int addr, int count = 1) = 0;
+    virtual bool readCoil(bool* vals, const std::string &name, int count = 1) = 0;
+
+    virtual bool readInt16(int* vals, const int slave_id, const int func, const int addr, int count = 1) = 0;
+    virtual bool readInt16(int* vals, const std::string &name, int count = 1) = 0;
+   
+    virtual bool readUInt16(int* vals, const int slave_id, const int func, const int addr, int count = 1) = 0;
+    virtual bool readUInt16(int* vals, const std::string &name, int count = 1) = 0;
+
+    virtual bool readFloat16(float* vals, const int slave_id, const int func, const int addr, int count = 1, int precision = 1) = 0;
+    virtual bool readFloat16(float* vals, const std::string &name, int count = 1) = 0;
+
+    virtual bool readFloat32(float *vals, const int slave_id, const int func, const int addr, int precision = 1, int count = 1, RegDataOrder order = RegDataOrder::NONE) = 0;
+    virtual bool readFloat32(float* vals, const std::string &name, int count = 1) = 0;
+
+    virtual bool readInt32(int* vals, const int slave_id, const int func, const int addr, int count = 1, RegDataOrder order = RegDataOrder::NONE) = 0;
+    virtual bool readInt32(int* vals, const std::string &name, int count = 1) = 0;
+
+    virtual bool readUInt32(unsigned int* vals, const int slave_id, const int func, const int addr, int count = 1, RegDataOrder order = RegDataOrder::NONE) = 0;
+    virtual bool readUInt32(unsigned int* vals, const std::string &name, int count = 1) = 0;
+
+    virtual bool writeCoil(bool* vals, const int slave_id, const int func, const int addr, int count = 1) = 0;
+    virtual bool writeCoil(bool* vals, const std::string &name, int count = 1) = 0;
+
+    virtual bool writeInt16(int* vals, const int slave_id, const int func, const int addr, int count = 1) = 0;
+    virtual bool writeInt16(int* vals, const std::string &name, int count = 1) = 0;
+
+    virtual bool writeUInt16(int* vals, const int slave_id, const int func, const int addr, int count = 1) = 0;
+    virtual bool writeUInt16(int* vals, const std::string &name, int count = 1) = 0;
+
+    virtual bool writeFloat16(float* vals, const int slave_id, const int func, const int addr, int count = 1, int precision = 1) = 0;
+    virtual bool writeFloat16(float* vals, const std::string &name, int count = 1, int precision = 1) = 0;
+
+    virtual bool writeFloat32(float* vals, const int slave_id, const int addr, int count = 1) = 0;
+    virtual bool writeFloat32(float* vals, const std::string &name, int count = 1) = 0;
+
+    virtual bool writeInt32(int* vals, const int slave_id, const int addr, int count = 1) = 0;
+    virtual bool writeInt32(int* vals, const std::string &name, int count = 1) = 0;
+
+    virtual bool writeUInt32(unsigned int* vals, const int slave_id, const int addr, int count = 1) = 0;
+    virtual bool writeUInt32(unsigned int* vals, const std::string &name, int count = 1) = 0;
 
     virtual ModbusData* getDataOnlyByName(const std::string& name) = 0;
     virtual ModbusData* getData(const std::string& name, const int func, const int slave_id = 1) = 0;

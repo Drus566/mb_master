@@ -19,8 +19,13 @@ public:
         else if (type == RegDataType::FLOAT16) setPrecisionFloat16(static_cast<int16_t*>(val), precision);
     }
     
+    // TODO: проверить с нулем
+    static void setPrecisionFloat16ForWrite(float& val, int precision) {
+        val *= std::pow(10, precision);
+    }
+
     static void setPrecisionFloat16(int16_t* val, int precision) {
-        int temp = static_cast<short>(*val);
+        int temp = static_cast<int16_t>(*val);
         *val = static_cast<float>(temp / std::pow(10, precision));
     }
 
@@ -118,7 +123,13 @@ public:
 		result = val;
 	}
 
-    static void swapBytes(uint16_t* src, const RegDataOrder data_order) {
+    static uint32_t getSwapBytes(uint32_t* src, const RegDataOrder data_order) {
+        uint32_t result = *src;
+        swapBytes(&result, data_order);
+        return result;
+    }
+
+    static void swapBytes(uint32_t* src, const RegDataOrder data_order) {
         if (data_order == RegDataOrder::AB_CD)      swapToAbcd(src);
       	else if (data_order == RegDataOrder::BA_DC) swapToBadc(src);
       	else if (data_order == RegDataOrder::CD_AB) swapToCdab(src);
@@ -158,9 +169,17 @@ public:
     static unsigned int modbusGetUint32Cdab(const uint16_t *src) { return static_cast<unsigned int>(modbusGetCdab(src)); }
     static unsigned int modbusGetUint32(const uint16_t *src)     { return static_cast<unsigned int>(modbusGetCdab(src)); }
     
+    template <typename T>
+    static void modbusSetByteOrder(T val, uint16_t* dest, RegDataOrder data_order) {
+        if (data_order == RegDataOrder::AB_CD)      modbusSetAbcd(dest);
+      	else if (data_order == RegDataOrder::BA_DC) modbusSetBadc(dest);
+      	else if (data_order == RegDataOrder::CD_AB) modbusSetCdab(dest);
+      	else if (data_order == RegDataOrder::DC_BA) modbusSetDcba(dest);
+    }
+
     /* Set to 4 bytes for Modbus w/o any conversion (ABCD) */
 	template <typename T>
-    void modbusSetAbcd(T val, uint16_t *dest) {
+    static void modbusSetAbcd(T val, uint16_t *dest) {
         T * ptr = &val;
         uint32_t * iptr = (uint32_t *)ptr;
         uint32_t i = *iptr;
@@ -177,7 +196,7 @@ public:
     
     /* Set to 4 bytes for Modbus with byte and word swap conversion (DCBA) */
     template <typename T>
-    void modbusSetDcba(T val, uint16_t *dest) {
+    static void modbusSetDcba(T val, uint16_t *dest) {
         T * ptr = &val;
         uint32_t * iptr = (uint32_t *)ptr;
         uint32_t i = *iptr;
@@ -194,7 +213,7 @@ public:
     
     /* Set to 4 bytes for Modbus with byte swap conversion (BADC) */
     template <typename T>
-    void modbusSetBadc(T val, uint16_t *dest) {
+    static void modbusSetBadc(T val, uint16_t *dest) {
         T * ptr = &val;
         uint32_t * iptr = (uint32_t *)ptr;
         uint32_t i = *iptr;
@@ -211,7 +230,7 @@ public:
     
     /* Set to 4 bytes for Modbus with word swap conversion (CDAB) */
     template <typename T>
-    void modbusSetCdab(T val, uint16_t *dest) {
+    static void modbusSetCdab(T val, uint16_t *dest) {
         T * ptr = &val;
         uint32_t * iptr = (uint32_t *)ptr;
         uint32_t i = *iptr;
@@ -226,7 +245,7 @@ public:
         dest[1] = (a << 8) | b;
     }
 
-    void modbusSetAbcd(uint16_t *dest) {
+    static void modbusSetAbcd(uint16_t *dest) {
         uint32_t *iptr = (uint32_t *)dest;
         uint32_t i = *iptr;
         uint8_t a, b, c, d;
@@ -240,7 +259,7 @@ public:
         dest[1] = (c << 8) | d;
     }
     
-    void modbusSetDcba(uint16_t *dest) {
+    static void modbusSetDcba(uint16_t *dest) {
         uint32_t *iptr = (uint32_t *)dest;
         uint32_t i = *iptr;
         uint8_t a, b, c, d;
@@ -254,7 +273,7 @@ public:
         dest[1] = (b << 8) | a;
     }
     
-    void modbusSetBadc(uint16_t *dest) {
+    static void modbusSetBadc(uint16_t *dest) {
         uint32_t *iptr = (uint32_t *)dest;
         uint32_t i = *iptr;
         uint8_t a, b, c, d;
@@ -268,7 +287,7 @@ public:
         dest[1] = (d << 8) | c;
     }
     
-    void modbusSetCdab(uint16_t *dest) {
+    static void modbusSetCdab(uint16_t *dest) {
         uint32_t *iptr = (uint32_t *)dest;
         uint32_t i = *iptr;
         uint8_t a, b, c, d;
@@ -361,68 +380,64 @@ public:
     }
 
     /* Get from 4 bytes (Modbus) without any conversion (ABCD) */
-    static void swapToAbcd(const uint16_t *src) {
-        uint32_t res;
-        uint32_t i;
+    static void swapToAbcd(uint32_t *src) {
+        uint16_t* ptr = reinterpret_cast<uint16_t*>(src);
         uint8_t a, b, c, d;
 
         // Mind: src contains 16-bit numbers in processor-endianness, hence
         //       we use shift operations and do not access memory directly
-        a = (src[0] >> 8) & 0xFF; // high byte of first word
-        b = (src[0] >> 0) & 0xFF; // low byte of first word
-        c = (src[1] >> 8) & 0xFF; // high byte of second word
-        d = (src[1] >> 0) & 0xFF; // low byte of second word
+        a = (ptr[0] >> 8) & 0xFF; // high byte of first word
+        b = (ptr[0] >> 0) & 0xFF; // low byte of first word
+        c = (ptr[1] >> 8) & 0xFF; // high byte of second word
+        d = (ptr[1] >> 0) & 0xFF; // low byte of second word
 
         // we assemble 32bit integer always in abcd order via shift operations
-        i = (a << 24) | (b << 16) | (c << 8) | (d << 0);
+        *src = (a << 24) | (b << 16) | (c << 8) | (d << 0);
     }
 
     /* Get from 4 bytes (Modbus) in inversed format (DCBA) */
-    static void swapToDcba(const uint16_t *src) {
-        uint32_t res;
-        uint32_t i;
+    static void swapToDcba(uint32_t *src) {
+        uint16_t* ptr = reinterpret_cast<uint16_t*>(src);
         uint8_t a, b, c, d;
 
         // byte order is defined when reading from src: dcba
-        d = (src[0] >> 8) & 0xFF;
-        c = (src[0] >> 0) & 0xFF;
-        b = (src[1] >> 8) & 0xFF;
-        a = (src[1] >> 0) & 0xFF;
+        d = (ptr[0] >> 8) & 0xFF;
+        c = (ptr[0] >> 0) & 0xFF;
+        b = (ptr[1] >> 8) & 0xFF;
+        a = (ptr[1] >> 0) & 0xFF;
 
         // we assemble 32bit integer always in abcd order via shift operations
-        i = (a << 24) | (b << 16) | (c << 8) | (d << 0);
+        *src = (a << 24) | (b << 16) | (c << 8) | (d << 0);
     }
 
     /* Get from 4 bytes (Modbus) with swapped bytes (BADC) */
-    static void swapToBadc(const uint16_t *src) {
-        uint32_t res;
-        uint32_t i;
+    static void swapToBadc(uint32_t *src) {
+        uint16_t* ptr = reinterpret_cast<uint16_t*>(src);
         uint8_t a, b, c, d;
 
         // byte order is defined when reading from src: badc
-        b = (src[0] >> 8) & 0xFF;
-        a = (src[0] >> 0) & 0xFF;
-        d = (src[1] >> 8) & 0xFF;
-        c = (src[1] >> 0) & 0xFF;
+        b = (ptr[0] >> 8) & 0xFF;
+        a = (ptr[0] >> 0) & 0xFF;
+        d = (ptr[1] >> 8) & 0xFF;
+        c = (ptr[1] >> 0) & 0xFF;
 
         // we assemble 32bit integer always in abcd order via shift operations
-        i = (a << 24) | (b << 16) | (c << 8) | (d << 0);
+        *src = (a << 24) | (b << 16) | (c << 8) | (d << 0);
     }
 
     /* Get from 4 bytes (Modbus) with swapped words (CDAB) */
-    static void swapToCdab(const uint16_t *src) {
-        uint32_t res;
-        uint32_t i;
+    static void swapToCdab(uint32_t *src) {
+        uint16_t* ptr = reinterpret_cast<uint16_t*>(src);
         uint8_t a, b, c, d;
 
         // byte order is defined when reading from src: cdab
-        c = (src[0] >> 8) & 0xFF;
-        d = (src[0] >> 0) & 0xFF;
-        a = (src[1] >> 8) & 0xFF;
-        b = (src[1] >> 0) & 0xFF;
+        c = (ptr[0] >> 8) & 0xFF;
+        d = (ptr[0] >> 0) & 0xFF;
+        a = (ptr[1] >> 8) & 0xFF;
+        b = (ptr[1] >> 0) & 0xFF;
 
         // we assemble 32bit integer always in abcd order via shift operations
-        i = (a << 24) | (b << 16) | (c << 8) | (d << 0);
+        *src = (a << 24) | (b << 16) | (c << 8) | (d << 0);
     }
 };
 

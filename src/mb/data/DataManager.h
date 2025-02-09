@@ -41,6 +41,7 @@ public:
 
     const std::vector<Request>& getReadRequests();
     const int getMaxCountReadRegs();
+    const RegDataOrder getDataOrder();
 
     void printRegs();
 

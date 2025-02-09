@@ -84,28 +84,22 @@ int main(void) {
 	// if (g == nullptr) std::cout << "GGWP" << std::endl;
 	// g->getBit();
 
-	float float_data[10];
-	float_data[0] = 22.5691121;
-	float_data[1] = 33.1254;
-	float_data[2] = 44.19645;
-	float_data[3] = 56.6753;
-	float_data[4] = 78.1895;
+	float float_data[5];
 
 	while(true) {
-		
-		mb->writeFloat32(float_data, 1, 200, 5);
-		// mb->(float_data, 1, 3, 200, 5, 5, mb::types::RegDataOrder::CD_AB);
 
-		// for (int i = 0; i < 5; i++) {
-		// 	std::cout << "Data: " << float_data[i] << std::endl;
-		// }
+		mb->readFloat32(float_data, 1, 3, 200, 5, 5, mb::types::RegDataOrder::CD_AB);
 
-		// mb->readFloat32(float_data, 1, 3, 210, 5, 5, mb::types::RegDataOrder::AB_CD);
+		for (int i = 0; i < 5; i++) {
+			std::cout << "Data: " << float_data[i] << std::endl;
+		}
 
-		// for (int i = 0; i < 5; i++) {
-		// 	// std::cout << "Data: " << float_data[i] << std::endl;
-		// 	printf("Data: %.4f\n", float_data[i]);
-		// }
+		mb->readFloat32(float_data, 1, 3, 210, 5, 5, mb::types::RegDataOrder::AB_CD);
+
+		for (int i = 0; i < 5; i++) {
+			// std::cout << "Data: " << float_data[i] << std::endl;
+			printf("Data: %.4f\n", float_data[i]);
+		}
 
 		// mb->readFloat32(float_data, 1, 3, 220, 3, 1, mb::types::RegDataOrder::BA_DC);
 		// for (int i = 0; i < 5; i++) {

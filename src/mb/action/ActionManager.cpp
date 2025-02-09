@@ -34,7 +34,7 @@ ActionManager::ActionManager(Config* config,
 							 MemManager* mem_manager) : m_config(config), 
 									  					m_data_manager(data_manager),
 														m_mem_manager(mem_manager),
-							   		  				m_run(false),
+							   		  					m_run(false),
 														m_connect(false) {
 	m_direct_request_priority = m_config->directRequestPriority();
 
@@ -179,7 +179,7 @@ bool ActionManager::handleDirectRequest(void* vals, const int slave_id, const in
 
 void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager, DirectRequestManager* direct_req_manager) {
 	m_run.store(true);
-
+	
 	const std::vector<Request>& read_requests = data_manager->getReadRequests();
 	const int max_count_read_regs = data_manager->getMaxCountReadRegs();
 	Queue<DirectRequest*>* direct_req_queue = direct_req_manager->getQueue();
@@ -193,6 +193,17 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager, 
 
 	int counter_direct_request = 0;
 
+	if (read_requests.empty()) { 
+		Logger::Instance()->log(LogLevel::INFO, "Not read requests start handle ONLY DIRECT REQUESTS"); 
+		goto ONLY_DIRECT_REQUESTS;
+	}
+	else if (read_requests.empty() && m_direct_request_priority < 0) {
+		Logger::Instance()->log(LogLevel::INFO, "Not read requests and direct request priority < 0, exit from handle requests"); 
+		return;
+	}
+
+	Logger::Instance()->log(LogLevel::INFO, "Start handle read requests and direct requests"); 
+
 	while (m_run.load()) {
 		std::this_thread::sleep_for(m_poll_delay);
 
@@ -204,7 +215,7 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager, 
 					response = m_modbus_master->readBits(request.slave_id, request.address, request.quantity, u8_ptr);
 					if (response) mem_manager->writeMem(u8_ptr, request.mem_chunk->u8_ptr, request.quantity, request.offset_mem_chunk);
 					break;
-				
+
 				case FuncNumber::READ_INPUT_COIL: 
 					response = m_modbus_master->readInputBits(request.slave_id, request.address, request.quantity, u8_ptr); 
 					if (response) mem_manager->writeMem(u8_ptr, request.mem_chunk->u8_ptr, request.quantity, request.offset_mem_chunk);
@@ -237,7 +248,7 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager, 
 
 			std::this_thread::sleep_for(m_time_between_requests);
 			
-			// Check out requests
+			// Проверка приоритета прямых запросов
 			if (m_direct_request_priority < 0) continue;
 
 			while (!direct_req_queue->empty()) {
@@ -307,75 +318,76 @@ void ActionManager::payload(DataManager* data_manager, MemManager* mem_manager, 
 				std::this_thread::sleep_for(m_time_between_requests);
 			}
 		}
+	}
 
-		if (!read_requests.empty()) continue;
-
-					while (!direct_req_queue->empty()) {
-				if (m_direct_request_priority != 0) {
-					if (counter_direct_request < m_direct_request_priority) ++counter_direct_request;
-					else {
-						counter_direct_request = 0;
-						break;
-					}
+ONLY_DIRECT_REQUESTS:
+	while (m_run.load()) {
+		while (!direct_req_queue->empty()) {
+			if (m_direct_request_priority != 0) {
+				if (counter_direct_request < m_direct_request_priority) ++counter_direct_request;
+				else {
+					counter_direct_request = 0;
+					break;
 				}
-
-				response = false;
-
-				if (direct_req_queue->pop(r)) {
-					switch (r->function) {
-						case FuncNumber::READ_COIL:
-							response = m_modbus_master->readBits(r->slave_id, r->address, r->quantity, r->u8_out_mem);
-							break;
-
-						case FuncNumber::READ_INPUT_COIL:
-							response = m_modbus_master->readInputBits(r->slave_id, r->address, r->quantity, r->u8_out_mem);
-							break;
-
-						case FuncNumber::READ_REGS:
-							response = m_modbus_master->readRegisters(r->slave_id, r->address, r->quantity, r->u16_out_mem);
-							break;
-
-						case FuncNumber::READ_INPUT_REGS:
-							response = m_modbus_master->readInputRegisters(r->slave_id, r->address, r->quantity, r->u16_out_mem);
-							break;
-
-						case FuncNumber::WRITE_SINGLE_COIL:
-							response = m_modbus_master->writeBit(r->slave_id, r->address, *(r->u8_out_mem));
-							break;
-
-						case FuncNumber::WRITE_MULTIPLE_COILS:
-							response = m_modbus_master->writeBits(r->slave_id, r->address, r->quantity, r->u8_out_mem);
-							break;
-
-						case FuncNumber::WRITE_SINGLE_WORD:
-							response = m_modbus_master->writeRegister(r->slave_id, r->address, *(r->u16_out_mem));
-							break;
-
-						case FuncNumber::WRITE_MULTIPLE_WORDS:
-							response = m_modbus_master->writeRegisters(r->slave_id, r->address, r->quantity, r->u16_out_mem);
-							break;
-					}
-				}
-
-				r->setStatus(response);
-				r->setFinish(true);
-
-				if (!response) { 
-					m_modbus_master->flush();
-					++error;
-				} 
-				else { 
-					error = 0;
-					m_connect.store(true);
-				}
-
-				if (error > m_max_count_errors) { 
-					error = m_max_count_errors;
-					m_connect.store(false);
-				}
-
-				std::this_thread::sleep_for(m_time_between_requests);
 			}
+
+			response = false;
+
+			if (direct_req_queue->pop(r)) {
+				switch (r->function) {
+					case FuncNumber::READ_COIL:
+						response = m_modbus_master->readBits(r->slave_id, r->address, r->quantity, r->u8_out_mem);
+						break;
+
+					case FuncNumber::READ_INPUT_COIL:
+						response = m_modbus_master->readInputBits(r->slave_id, r->address, r->quantity, r->u8_out_mem);
+						break;
+
+					case FuncNumber::READ_REGS:
+						response = m_modbus_master->readRegisters(r->slave_id, r->address, r->quantity, r->u16_out_mem);
+						break;
+
+					case FuncNumber::READ_INPUT_REGS:
+						response = m_modbus_master->readInputRegisters(r->slave_id, r->address, r->quantity, r->u16_out_mem);
+						break;
+
+					case FuncNumber::WRITE_SINGLE_COIL:
+						response = m_modbus_master->writeBit(r->slave_id, r->address, *(r->u8_out_mem));
+						break;
+
+					case FuncNumber::WRITE_MULTIPLE_COILS:
+						response = m_modbus_master->writeBits(r->slave_id, r->address, r->quantity, r->u8_out_mem);
+						break;
+
+					case FuncNumber::WRITE_SINGLE_WORD:
+						response = m_modbus_master->writeRegister(r->slave_id, r->address, *(r->u16_out_mem));
+						break;
+
+					case FuncNumber::WRITE_MULTIPLE_WORDS:
+						response = m_modbus_master->writeRegisters(r->slave_id, r->address, r->quantity, r->u16_out_mem);
+						break;
+				}
+			}
+
+			r->setStatus(response);
+			r->setFinish(true);
+
+			if (!response) { 
+				m_modbus_master->flush();
+				++error;
+			} 
+			else { 
+				error = 0;
+				m_connect.store(true);
+			}
+
+			if (error > m_max_count_errors) { 
+				error = m_max_count_errors;
+				m_connect.store(false);
+			}
+
+			std::this_thread::sleep_for(m_time_between_requests);
+		}
 	}
 }
 
@@ -398,6 +410,7 @@ void ActionManager::printInfo() {
 			Logger::Instance()->rawLog("Port=%d", m_modbus_connection.eth.port);
 		}
 
+		Logger::Instance()->rawLog("DataOrder=%s", m_data_manager->getDataOrder());
 		Logger::Instance()->rawLog("MaxCountRegsRead=%d", m_data_manager->getMaxCountReadRegs());
 		Logger::Instance()->rawLog("TimeBetweenRequests=%d milliseconds", m_time_between_requests.count());
 		Logger::Instance()->rawLog("ResponseTimeout=%d milliseconds", m_modbus_connection.response_timeout);

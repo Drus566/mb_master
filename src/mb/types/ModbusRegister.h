@@ -13,7 +13,7 @@ struct RegisterInfo {
     char precision;         // точность
     
     RegisterInfo(RegDataType data_type = RegDataType::INT16, 
-                 RegDataOrder order = RegDataOrder::CD_AB, 
+                 RegDataOrder order = RegDataOrder::NONE, 
                  char precision = 1)
         : data_type(data_type), order(order), precision(precision) {}
 };

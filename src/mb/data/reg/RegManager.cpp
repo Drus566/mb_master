@@ -10,6 +10,10 @@ namespace data {
 
 using namespace mb::log;
 
+RegManager::RegManager(RegDataOrder data_order) : m_data_order(data_order) {}
+
+RegDataOrder RegManager::getDataOrder() { return m_data_order; }
+
 bool RegManager::parseReg(const bool is_describe, const std::string& reg_str, int& address, RegisterInfo& reg_info) {
 	bool result = false;
 	char delimeter = ',';
@@ -63,6 +67,8 @@ bool RegManager::addReg(const bool is_describe, const int slave_id, const FuncNu
 
 	// parse func
 	result = parseReg(is_describe, reg_str, address, reg_info);
+
+	if (isDwordDataType(reg_info.data_type) && reg_info.order == RegDataOrder::NONE) reg_info.order = m_data_order;
 	
 	if (result) { 
 		if (is_describe) m_describe_regs.emplace_front(address, reg_info, name, slave_id, func); 

@@ -36,8 +36,47 @@ public:
    bool runRequest(void *vals, const int slave_id, const int func, const int addr, int count) override;
    bool runRequest(void *vals, const std::string &name, int count) override;
    
+   bool readCoil(bool* vals, const int slave_id, const int func, const int addr, int count) override;
+   bool readCoil(bool* vals, const std::string &name, int count) override;
+
+   bool readInt16(int* vals, const int slave_id, const int func, const int addr, int count) override;
+   bool readInt16(int* vals, const std::string &name, int count) override;
+
+   bool readUInt16(int* vals, const int slave_id, const int func, const int addr, int count) override;
+   bool readUInt16(int* vals, const std::string &name, int count) override;
+
+   bool readFloat16(float* vals, const int slave_id, const int func, const int addr, int count, int precision) override;
+   bool readFloat16(float* vals, const std::string &name, int count) override;
+
    bool readFloat32(float* vals, const int slave_id, const int func, const int addr, int precision, int count, RegDataOrder order) override;
-   bool readFloat32(void *vals, const std::string &name, int count) override;
+   bool readFloat32(float* vals, const std::string &name, int count) override;
+
+   bool readInt32(int* vals, const int slave_id, const int func, const int addr, int count, RegDataOrder order) override;
+   bool readInt32(int* vals, const std::string &name, int count) override;
+   
+   bool readUInt32(unsigned int* vals, const int slave_id, const int func, const int addr, int count, RegDataOrder order) override;
+   bool readUInt32(unsigned int* vals, const std::string &name, int count) override;
+
+   bool writeCoil(bool* vals, const int slave_id, const int func, const int addr, int count) override;
+   bool writeCoil(bool* vals, const std::string &name, int count) override;
+
+   bool writeInt16(int* vals, const int slave_id, const int func, const int addr, int count) override;
+   bool writeInt16(int* vals, const std::string &name, int count) override;
+
+   bool writeUInt16(int* vals, const int slave_id, const int func, const int addr, int count) override;
+   bool writeUInt16(int* vals, const std::string &name, int count) override;
+
+   bool writeFloat16(float* vals, const int slave_id, const int func, const int addr, int count, int precision) override;
+   bool writeFloat16(float* vals, const std::string &name, int count, int precision) override;
+
+   bool writeFloat32(float* vals, const int slave_id, const int addr, int count);
+   bool writeFloat32(float* vals, const std::string &name, int count);
+
+   bool writeInt32(int* vals, const int slave_id, const int addr, int count);
+   bool writeInt32(int* vals, const std::string &name, int count);
+
+   bool writeUInt32(unsigned int* vals, const int slave_id, const int addr, int count);
+   bool writeUInt32(unsigned int* vals, const std::string &name, int count);
 
    IMB::ModbusData* getDataOnlyByName(const std::string& name);
    IMB::ModbusData* getData(const std::string& name, const int func, const int slave_id) override;
