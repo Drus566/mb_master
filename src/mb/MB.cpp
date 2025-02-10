@@ -81,7 +81,7 @@ bool MB::runRequest(void *vals, const int slave_id, const int func, const int ad
 	return m_action_manager->handleDirectRequest(vals, slave_id, func, addr, count);
 }
 
-// count всегда 1, при любом типе данных coil word dword.
+// count = 1 всегда, при любом типе данных coil word dword.
 bool MB::runRequest(void *vals, const std::string &name, int count = 1) {
 	if (count < 1) return false;
 
